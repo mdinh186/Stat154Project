@@ -1,0 +1,363 @@
+---
+title: "ProjectEDA"
+author: "My Dinh"
+date: "11/13/2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r}
+library(data.table)
+library(ggplot2)
+library(ggforce)
+library(GGally)
+library(car)
+library(nortest)
+library(MASS)
+library(forecast)
+library(psych)
+library(MissMech)
+```
+
+
+
+
+Nov 27: finish EDA: 
+2pm - 4:30 pm.
+baseline 
+Dec1: after 2PM 
+
+when meet up; 
+feature enginering: 
+feature selection
+
+Dec 4: 
+
+
+#### 
+```{r}
+#rm(list = ls())
+dir = "/Users/MyDinh/Downloads/Stat154/Projects"
+setwd(dir)
+df  = read.table("data/adult.data", sep = ",",colClasses=c("numeric", "character", "numeric", "factor","numeric", "factor", "character", "factor", "factor", "factor", rep("numeric", 3),"character","factor"))
+
+df = data.table(df)
+names(df) = c("age", "workclass", "fnlwgt", "education", "education-num", "martial-status", 
+              "occupation", "relationship", "race", "sex", "capital_gain", "capital_loss", "hour-per-week", "native_country","income")
+summary(df)
+
+str(df)
+```
+
+## Analysis of House Income: 
+
+```{r}
+ggplot(df,aes(x = V15)) + geom_bar(alpha= .8, fill = "lightblue") + labs(x = "Income")
+```
+It seems to have some problem with imbalanced class. We need to make necessary adjustment to adjust the the probability threshold for imbalanced class. 
+
+Let's see if the income has any relationship with the predictor: 
+
+```{r, warning=F}
+df_cont = df[, c(1,3, 5, 11:13,15)]
+df_cat = df[, -c(1,3, 5, 11:13)]
+par(mfrow=c(1,1))
+names = colnames(df_cont)
+
+for (i in 1:(ncol(df_cont)-1)) {
+  print(paste("Summary table for income over", names[i]))
+  df_plot = data.frame(x= df_cont[[i]], income = df_cont$income)
+ 
+  print(tapply(df_plot$x, df_plot$income, summary))
+  g1 = ggplot(df_plot, aes(x = x, fill = income)) + 
+    geom_histogram() + 
+    facet_grid(~income) + theme_bw() +
+    labs(x= names[i])
+  print(g1)
+}
+
+
+
+```
+
+We observed: 
+
+* Captial loss: people with income over 50k tends to have higher capital loss but with smaller maximum capital loss
+* Capital gain: people with income over 50k tends to have higher capital cgain, with some extreme outliers with values over 100k 
+* Age: the age distribution of people whose income less than 50k tends to skewed to the left, indicating that they are more younger age. Mean while, the age distribution of people with income higher than 50k roughly normal, with higher mean and median. 
+* Eduction num: people with higher income tendds to have higher education-num
+* fnlwgt: both income group roughly share the same distribution.
+
+
+## Data Transformation
+
+```{r}
+### Let's check the box plot: 
+
+boxplot(df_cont)
+### check the distribution plot 
+
+
+ggpairs(df_cont)
+
+### V1 and V3 and right-skewed distribution
+### V11 and V12 hav heavy tail distribution 
+## 
+```
+
+We observed:
+
+ * V1 and V3 can achieve normality by performaing log transformation.
+ * V5 and V13 may need more work than regular log transformation. We can try power transfrmation family. 
+ * V11 and V12 have heavy tails, which requires more research. One suggestion is to use inverse hyperbolic sine transformation which takes care of zero. 
+ 
+
+Let's try to transform the distribution: 
+
+```{r}
+df_transform = cbind(df)
+
+
+par(mfrow= c(1,2))
+## try log transform for V1
+v1_trans = log(df_transform$V1)
+plot(density(v1_trans),main= "PDF")
+### qqplot with normality test
+qqPlot(v1_trans, dist= "norm", col=palette()[1],xlab = paste0("Ad-test p-value: ", ad.test(v1_trans)$p.value), pch = 19)
+
+v3_trans = log(df_transform$V3)
+plot(density(v3_trans),main= "PDF")
+qqPlot(v3_trans, dist= "norm", col=palette()[1],xlab = paste0("Ad-test p-value: ", ad.test(v3_trans)$p.value), pch = 19)
+
+
+
+v5_trans = log(df_transform$V5)
+plot(density(v5_trans),main= "PDF")
+qqPlot(v5_trans, dist= "norm", col=palette()[1], pch = 19)
+
+
+### Let's try box cox transformation: 
+## find optimal lambda 
+lam_5= BoxCox.lambda(df_transform$V5, method = "loglik")
+v5_trans = BoxCox(df$V5, lam_5)
+plot(density(v5_trans),main= "PDF")
+qqPlot(v5_trans, dist= "norm", col=palette()[1], pch = 19, main = "Box Cox transformation")
+# it works perfectly for v5
+
+
+
+lam_13 = BoxCox.lambda(df_transform$V13)
+lam_13
+v13_trans = BoxCox(df$V13, lam_13)
+plot(density(v13_trans),main= "PDF")
+qqPlot(v13_trans, dist= "norm", col=palette()[1], pch = 19, main = "With Box Cox transformation")
+#### Doesn't work for v13
+
+
+
+v13_trans = tan(df_transform$V13)
+plot(density(v13_trans),main= "PDF")
+qqPlot(v13_trans, dist= "norm", col=palette()[1], pch = 19, main = "With tan transformation")
+#### Looks like this is reasonable transformation but let's check other transformation
+
+power = seq(1.5, 3, 0.5)
+for (p in power){
+  trans = (df_transform$V13)**p
+  plot(density(trans),main= "PDF")
+  qqPlot(trans, dist= "norm", col=palette()[1], pch = 19, main = paste("With Power",p, "transformation"))
+}
+
+
+ihs = function(x){
+  y = log(x + sqrt(x^2+1))
+  return (y)
+}
+
+v11_trans = ihs(df_transform$V11)
+plot(density(v11_trans),main= "PDF")
+qqPlot(v11_trans, dist= "norm", main = "With Inverse Hyperbolic Sine Transformation",col=palette()[1], pch = 19)
+
+
+v12_trans = ihs(df_transform$V12)
+plot(density(v12_trans), main= "PDF")
+qqPlot(v12_trans, dist= "norm", col=palette()[1], main = "With Inverse Hyperbolic Sine Transformation", pch = 19)
+
+```
+
+
+Thus we will do the following transformation: 
+ 
+ * Log transformation : V1, V3
+ * Box-cox transformation: V5
+
+
+
+
+
+## Missing values: 
+
+Let check how many missing values for each variable:
+
+```{r}
+sapply(df, function(x) sum(is.na(x)))
+
+### it seems "?" represents as missing values
+### Lets do a recount again: 
+### convert factor columns into charactor: 
+
+
+df_fac = df[,c(2, 7, 14)]
+sapply(df_fac, function(x) table(x)[1])/nrow(df) *100 ### getting percentage
+
+
+
+
+```
+So roughly there are around 5000 missing values if none of them are overlapping. 
+
+Let's see if there is any pattern in those missing vlaues: 
+
+```{r}
+
+ 
+col_missing = names(df_fac)
+
+plot_Missing = function(data){
+  temp_df = cbind(data)
+  temp_df[temp_df == " ?"] = NA
+  temp_df = as.data.frame(ifelse(is.na(temp_df), 0,1))
+  data_temp = expand.grid(list(x = 1:nrow(temp_df), y = colnames(temp_df)))
+  data_temp$m = as.vector(as.matrix(temp_df))
+  data_temp = data.frame(x = unlist(data_temp$x), y = unlist(data_temp$y),  m= unlist(data_temp$m))
+  ggplot(data_temp) + geom_tile(aes(x = x, y = y, fill = factor(m))) +
+    scale_fill_manual(values= c("white", "black"), name = "Missing\n(0 = Yes, 1 = No)") + 
+    theme_light() + 
+    ylab("") +
+    xlab("") 
+  }
+
+plot_Missing(df)
+```
+
+Based on this graph, the missing values for colum workclass and educations seems to be corresponded to each other, while native country maybe more random. 
+
+We will try to impute the missing vlaues and remove it from the data and see what version works better.
+
+
+#### Feature engineering: 
+
+1. We will combine some levels of education so that we will have less levels and have more insights. 
+
+The split up based on the census income report in 1994: 
+https://www.census.gov/prod/1/pop/p60-189.pdf
+
+We will have 10 following levels; 
+
+Less than high school
+High school with no degree
+High school diploma or equivalent
+Some college, no degree
+Associate’s degree
+Bachelor’s degree
+Master’s degree
+Doctoral degree and professional degree
+
+
+
+
+```{r}
+
+combine_education = function(dat){
+  dat$education = as.character(dat$education)
+  level1 = c(" Preschool"," 1st-4th", " 5th-6th", " 7th-8th")
+  dat[,education := ifelse(education %in% level1, "Less than highschool",education)] 
+  level2 = c(" 9th", " 10th", " 11th", " 12th")
+  dat[,education := ifelse(education %in% level2, "HS with no degree",education)] 
+  dat[,education := ifelse(education == " HS-grad", "HS",education)] 
+  level3 = c(" Assoc-acdm"," Assoc-voc")
+  dat[,education := ifelse(education %in% level3, "Associate",education)] 
+  level4 = c(" Prof-school", " Doctorate")
+  dat[,education := ifelse(education %in% level4, "Doctorate or Professional",education)] 
+
+  return (dat)
+}
+
+df_feat =  combine_education(df)
+edu_income = table(df_feat$education, df$income)
+edu_income = data.table(Degree = rownames(edu_income), Less_50k = edu_income[,1], More_50k = edu_income[,2])
+edu_income = melt(edu_income, id.vars = "Degree", measure.vars = 2:3)
+
+ggplot(edu_income, aes(factor(Degree), value, fill = variable)) + 
+  geom_bar(stat="identity", position = "dodge") + 
+  scale_fill_brewer(palette = "Set1") +
+  labs(x = "Degree",y = "Income")
+```
+so we can easily see that: 
+- For degree from less-than high school tol Bachelor, ppl are more likely to have lower income than ppl with advanced degree. 
+
+Let's change the degree with actually income. We may just drop thecolumn education year since it's not much of indicator if we already have the qualitative median income. Let's modify the aboved function: 
+
+```{r}
+education_median = function(dat){
+  degree = unique(dat$education)
+  degree_median_income = data.frame(education = degree, 
+                                    Edu_Mean_income = c(52370,30071,17543,61045,35879,40258,14275,78079))
+  dat = merge(dat, degree_median_income, by = "education")
+  return (dat)
+}
+df_feat = education_median(df_feat)
+```
+
+
+2. Age: 
+
+We decide to break age into 7 bins: 
+- 15- 24
+- 25- 34
+- 35 -44
+- 45 - 54
+- 55 - 64
+- 65 -74
+- 75 and older
+
+```{r}
+df_feat$age = cut(df_feat$age, c(seq(14,74, 10), 90), labels = 1:7)
+df_feat$age = as.factor(df_feat$age)
+```
+
+
+
+3. Race: 
+
+```{r}
+plot(table(df_feat$sex,df_feat$race,df_feat$income), las =1, main = "Cross ratio between Gender, Ethicity, and Income")
+```
+
+We observed that there are less female of minorities class earn more than 50k than white female. We will make a new column based on gender and minority status. For example, if individual is female and is black, this person will in class "fb"
+-------------------------------------
+
+-------------------------------------
+
+We will also combine other with  Amer-Indian-Eskimo and Other togheter since their population is small. 
+
+```{r}
+race_combine = function(dat){
+  dat$race = as.character(dat$race)
+  race = unique(dat$race)
+  dat[, race := ifelse(race ==" Amer-Indian-Eskimo", "Other", race)] 
+  sex = as.character(dat$sex)
+  for (r in race){
+    dat[, eth_gen := ifelse(race == r & , )]
+  }
+  
+}
+```
+
+
+
+3. Martial-status and sex
+
+
+
+
