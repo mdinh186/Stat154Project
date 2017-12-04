@@ -90,110 +90,6 @@ We observed:
 * fnlwgt: both income group roughly share the same distribution.
 
 
-## Data Transformation
-
-```{r}
-### Let's check the box plot: 
-
-boxplot(df_cont)
-### check the distribution plot 
-
-
-ggpairs(df_cont)
-
-### V1 and V3 and right-skewed distribution
-### V11 and V12 hav heavy tail distribution 
-## 
-```
-
-We observed:
-
- * V1 and V3 can achieve normality by performaing log transformation.
- * V5 and V13 may need more work than regular log transformation. We can try power transfrmation family. 
- * V11 and V12 have heavy tails, which requires more research. One suggestion is to use inverse hyperbolic sine transformation which takes care of zero. 
- 
-
-Let's try to transform the distribution: 
-
-```{r}
-df_transform = cbind(df)
-
-
-par(mfrow= c(1,2))
-## try log transform for V1
-v1_trans = log(df_transform$V1)
-plot(density(v1_trans),main= "PDF")
-### qqplot with normality test
-qqPlot(v1_trans, dist= "norm", col=palette()[1],xlab = paste0("Ad-test p-value: ", ad.test(v1_trans)$p.value), pch = 19)
-
-v3_trans = log(df_transform$V3)
-plot(density(v3_trans),main= "PDF")
-qqPlot(v3_trans, dist= "norm", col=palette()[1],xlab = paste0("Ad-test p-value: ", ad.test(v3_trans)$p.value), pch = 19)
-
-
-
-v5_trans = log(df_transform$V5)
-plot(density(v5_trans),main= "PDF")
-qqPlot(v5_trans, dist= "norm", col=palette()[1], pch = 19)
-
-
-### Let's try box cox transformation: 
-## find optimal lambda 
-lam_5= BoxCox.lambda(df_transform$V5, method = "loglik")
-v5_trans = BoxCox(df$V5, lam_5)
-plot(density(v5_trans),main= "PDF")
-qqPlot(v5_trans, dist= "norm", col=palette()[1], pch = 19, main = "Box Cox transformation")
-# it works perfectly for v5
-
-
-
-lam_13 = BoxCox.lambda(df_transform$V13)
-lam_13
-v13_trans = BoxCox(df$V13, lam_13)
-plot(density(v13_trans),main= "PDF")
-qqPlot(v13_trans, dist= "norm", col=palette()[1], pch = 19, main = "With Box Cox transformation")
-#### Doesn't work for v13
-
-
-
-v13_trans = tan(df_transform$V13)
-plot(density(v13_trans),main= "PDF")
-qqPlot(v13_trans, dist= "norm", col=palette()[1], pch = 19, main = "With tan transformation")
-#### Looks like this is reasonable transformation but let's check other transformation
-
-power = seq(1.5, 3, 0.5)
-for (p in power){
-  trans = (df_transform$V13)**p
-  plot(density(trans),main= "PDF")
-  qqPlot(trans, dist= "norm", col=palette()[1], pch = 19, main = paste("With Power",p, "transformation"))
-}
-
-
-ihs = function(x){
-  y = log(x + sqrt(x^2+1))
-  return (y)
-}
-
-v11_trans = ihs(df_transform$V11)
-plot(density(v11_trans),main= "PDF")
-qqPlot(v11_trans, dist= "norm", main = "With Inverse Hyperbolic Sine Transformation",col=palette()[1], pch = 19)
-
-
-v12_trans = ihs(df_transform$V12)
-plot(density(v12_trans), main= "PDF")
-qqPlot(v12_trans, dist= "norm", col=palette()[1], main = "With Inverse Hyperbolic Sine Transformation", pch = 19)
-
-```
-
-
-Thus we will do the following transformation: 
- 
- * Log transformation : V1, V3
- * Box-cox transformation: V5
-
-
-
-
 
 ## Missing values: 
 
@@ -346,18 +242,152 @@ race_combine = function(dat){
   dat$race = as.character(dat$race)
   race = unique(dat$race)
   dat[, race := ifelse(race ==" Amer-Indian-Eskimo", "Other", race)] 
-  sex = as.character(dat$sex)
-  for (r in race){
-    dat[, eth_gen := ifelse(race == r & , )]
-  }
-  
+  dat$sex = as.character(dat$sex)
+  sex = unique(dat$sex)
+  gen_race = rep("NA", nrow(dat))
+   for (i in 1:nrow(dat)){
+     for (r in race){
+       if (dat$race[i] == r){
+         if (dat$sex[i] == " Female"){
+           gen_race[i] = paste0("f", substr(r, 1, 3))
+         } else{
+           gen_race[i] = paste0("m", substr(r, 1, 3))
+         }
+       }
+       }
+   }
+   gen_race = gsub(gen_race, pattern = " ", replacement = "")
+   dat$gen_race = gen_race
+   return (dat)
 }
+df_feat = race_combine(df_feat)
 ```
 
 
 
 3. Martial-status and sex
 
+
+```{r}
+ mrg_combine = function(dat){
+   dat$`martial-status` = as.character(dat$`martial-status`)
+   mrg = unique(dat$`martial-status`)
+   
+   dat$sex = as.character(dat$sex)
+   sex = unique(dat$sex)
+   gen_mrg = rep("NA", nrow(dat))
+   for (i in 1:nrow(dat)){
+     for (m in mrg){
+       if (dat$`martial-status`[i] == m){
+         if (dat$sex[i] == " Female"){
+           gen_mrg [i] = paste0("f", substr(m, 1, 3))
+         } else{
+           gen_mrg [i] = paste0("m", substr(m, 1, 3))
+         }
+       }
+       }
+   }
+   gen_mrg  = gsub(gen_mrg , pattern = " ", replacement = "")
+   dat$gen_mrg  = gen_mrg 
+   return (dat)
+ }
+df_feat = df_feat(df_feat)
+```
+
+
+
+## Data Transformation
+
+```{r}
+### Let's check the box plot: 
+
+boxplot(df_cont)
+### check the distribution plot 
+
+
+ggpairs(df_cont)
+
+### V1 and V3 and right-skewed distribution
+### V11 and V12 hav heavy tail distribution 
+## 
+```
+
+We observed:
+
+ * V1 and V3 can achieve normality by performaing log transformation.
+ * V13 may need more work than regular log transformation. We can try power transfrmation family. 
+ * V11 and V12 have heavy tails, which requires more research. One suggestion is to use inverse hyperbolic sine transformation which takes care of zero. 
+ 
+
+Let's try to transform the distribution: 
+
+```{r}
+df_transform = cbind(df)
+
+
+par(mfrow= c(1,2))
+## try log transform for V1
+v1_trans = log(df_transform$age)
+plot(density(v1_trans),main= "PDF")
+### qqplot with normality test
+qqPlot(v1_trans, dist= "norm", col=palette()[1],xlab = paste0("Ad-test p-value: ", ad.test(v1_trans)$p.value), pch = 19)
+
+v3_trans = log(df_transform$fnlwgt)
+plot(density(v3_trans),main= "PDF")
+qqPlot(v3_trans, dist= "norm", col=palette()[1],xlab = paste0("Ad-test p-value: ", ad.test(v3_trans)$p.value), pch = 19)
+
+
+
+lam_13 = BoxCox.lambda(df_transform$hour-per-week)
+lam_13
+v13_trans = BoxCox(df$V13, lam_13)
+plot(density(v13_trans),main= "PDF")
+qqPlot(v13_trans, dist= "norm", col=palette()[1], pch = 19, main = "With Box Cox transformation")
+#### Doesn't work for v13
+
+
+
+v13_trans = tan(df_transform$hour-per-week)
+plot(density(v13_trans),main= "PDF")
+qqPlot(v13_trans, dist= "norm", col=palette()[1], pch = 19, main = "With tan transformation")
+#### Looks like this is reasonable transformation but let's check other transformation
+
+power = seq(1.5, 3, 0.5)
+for (p in power){
+  trans = (df_transform$V13)**p
+  plot(density(trans),main= "PDF")
+  qqPlot(trans, dist= "norm", col=palette()[1], pch = 19, main = paste("With Power",p, "transformation"))
+}
+
+
+ihs = function(x){
+  y = log(x + sqrt(x^2+1))
+  return (y)
+}
+
+v11_trans = ihs(df_transform$capital_gain)
+plot(density(v11_trans),main= "PDF")
+qqPlot(v11_trans, dist= "norm", main = "With Inverse Hyperbolic Sine Transformation",col=palette()[1], pch = 19)
+
+
+v12_trans = ihs(df_transform$capital_loss)
+plot(density(v12_trans), main= "PDF")
+qqPlot(v12_trans, dist= "norm", col=palette()[1], main = "With Inverse Hyperbolic Sine Transformation", pch = 19)
+
+```
+
+
+Thus we will do the following transformation: 
+ 
+ * Log transformation : age, fnlwgt
+
+
+```{r}
+variable_transform = function(dat){
+  dat$age = log(dat$age)
+  dat$fnlwgt = log(dat$fnlwgt)
+}
+```
 
 
 
