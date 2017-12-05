@@ -8,28 +8,24 @@ dir = "/Users/MyDinh/Downloads/Stat154/Stat154Project/"
 setwd(dir)
 set.seed(123)
 
-df_origin = readRDS("data/df_remove_feat.rds")
+df_impute = readRDS("data/df_impute_feat.rds")
+df_impute$marital_status = as.factor(df_impute$marital_status)
+df_impute$sex = as.factor(df_impute$sex)
 
-n = ceiling(nrow(df_origin) * 0.8)
+
+
+n = ceiling(nrow(df_impute) * 0.8)
 #############################################################
 # Prepocessing data:
 #############################################################
 
 
-#############################################################
 
-train_idx = sample(nrow(df_origin),n)
-train_origin = df_origin[train_idx,]
-test_origin = df_origin[-train_idx, ]
+train_idx = sample(nrow(df_impute),n)
+train_origin = df_impute[train_idx,]
+test_origin = df_impute[-train_idx, ]
 xtrain_origin  = train_origin[,-c("income")]
 ytrain_origin = train_origin$income
-
-
-train_trans = df_feat[train_idx,]
-test_trans = df_feat[-train_idx,]
-
-
-
 
 
 
@@ -39,6 +35,9 @@ test_trans = df_feat[-train_idx,]
 
 control = trainControl(method = "cv", number = 5)
 
-rf_default  = train(x = xtrain_origin, y = ytrain_origin,
-                    metric = "logLoss", method = "rf", trControl = control, 
-                    importance= T)
+rf_default  = train(x = train_origin[,-14], y = train_origin$income,
+                  method = "rf", trControl = control, 
+                    importance= T, ntree = 100)
+
+
+### evaluation: 
