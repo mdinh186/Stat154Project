@@ -313,15 +313,15 @@ factorize <- function(data){
 
 mrg_combine = function(dat){
   dat <- data.table(dat)
-   dat$`martial-status` = as.character(dat$`martial-status`)
-   mrg = unique(dat$`martial-status`)
+   dat$`marital-status` = as.character(dat$`marital-status`)
+   mrg = unique(dat$`marital-status`)
    
    dat$sex = as.character(dat$sex)
    sex = unique(dat$sex)
    gen_mrg = rep("NA", nrow(dat))
    for (i in 1:nrow(dat)){
      for (m in mrg){
-       if (dat$`martial-status`[i] == m){
+       if (dat$`marital-status`[i] == m){
          if (dat$sex[i] == " Female"){
            gen_mrg [i] = paste0("f", substr(m, 1, 3))
          } else{
@@ -337,85 +337,75 @@ mrg_combine = function(dat){
 
 ```
 
-#Constructing CSVs and Dataframes
-Construct df_feat:
-```{r}
-df_feat =  combine_education(df)
-names(df_feat) <- c("age", "workclass", "fnlwgt", "education", "education-num", 
-              "marital_status", "occupation", "relationship", "race", "sex",
-              "capital-gain", "capital-loss", "hours-per-week",
-              "native_country","income")
-df_feat = education_median(df_feat)
-df_feat$`education-num` <- NULL
-df_feat <- age_combine(df_feat)
-df_feat = race_combine(df_feat) 
-df_feat <- marital_combine(df_feat)
-df_feat <- occupation_combine(df_feat)
-df_feat <- country_combine(df_feat)
-df_feat <- workclass_combine(df_feat)
-df_feat <- relation_combine(df_feat)
-df_feat <- cap_gain_clean_outlier(df_feat)
+#Constructing our cleaned data sets
 
-quant <- quantile(df_feat$`hours-per-week`,seq(0,1,.10))
-df_feat <- hours_combine(df_feat)
-df_feat <- Income_factor(df_feat)
-df_feat <- factorize(df_feat)
+Construct df_impute
+```{r}
+df_impute <- NA_imputes(df)
+
 ```
 
-Construct df_impute:
+Construct df_impute_feat:
 ```{r}
-df_impute =  combine_education(dataMissForestImputed)
-names(df_impute) <- c("age", "workclass", "fnlwgt", "education", "education-num", 
+df_impute_feat =  combine_education(dataMissForestImputed)
+names(df_impute_feat) <- c("age", "workclass", "fnlwgt", "education", "education-num", 
               "marital_status", "occupation", "relationship", "race", "sex",
               "capital-gain", "capital-loss", "hours-per-week",
               "native_country","income")
-df_impute = education_median(df_impute)
-df_impute$`education-num` <- NULL
-df_impute <- age_combine(df_impute)
-df_impute = race_combine(df_impute) 
-df_impute <- marital_combine(df_impute)
-df_impute <- occupation_combine(df_impute)
-df_impute <- country_combine(df_impute)
-df_impute <- workclass_combine(df_impute)
-df_impute <- relation_combine(df_impute)
-df_impute <- cap_gain_clean_outlier(df_impute)
+df_impute_feat = education_median(df_impute_feat)
+df_impute_feat$`education-num` <- NULL
+df_impute_feat <- age_combine(df_impute_feat)
+df_impute_feat = race_combine(df_impute_feat) 
+df_impute_feat <- marital_combine(df_impute_feat)
+df_impute_feat <- occupation_combine(df_impute_feat)
+df_impute_feat <- country_combine(df_impute_feat)
+df_impute_feat <- workclass_combine(df_impute_feat)
+df_impute_feat <- relation_combine(df_impute_feat)
+df_impute_feat <- cap_gain_clean_outlier(df_impute_feat)
 
-quant <- quantile(df_impute$`hours-per-week`,seq(0,1,.10))
-df_impute <- hours_combine(df_impute)
-df_impute <- Income_factor(df_impute)
-df_impute <- factorize(df_impute)
+quant <- quantile(df_impute_feat$`hours-per-week`,seq(0,1,.10))
+df_impute_feat <- hours_combine(df_impute_feat)
+df_impute_feat <- Income_factor(df_impute_feat)
+df_impute_feat <- factorize(df_impute_feat)
+
 ```
 
 Construct df_remove:
 ```{r}
-df_remove =  combine_education(dataNoNA)
-names(df_remove) <- c("age", "workclass", "fnlwgt", "education", "education-num", 
+df_remove <- na.omit(df)
+```
+
+Construct df_remove_feat:
+```{r}
+df_remove_feat =  combine_education(dataNoNA)
+names(df_remove_feat) <- c("age", "workclass", "fnlwgt", "education", "education-num", 
               "marital_status", "occupation", "relationship", "race", "sex",
               "capital-gain", "capital-loss", "hours-per-week",
               "native_country","income")
-df_remove = education_median(df_remove)
-df_remove$`education-num` <- NULL
-df_remove <- age_combine(df_remove)
-df_remove = race_combine(df_remove) 
-df_remove <- marital_combine(df_remove)
-df_remove <- occupation_combine(df_remove)
-df_remove <- country_combine(df_remove)
-df_remove <- workclass_combine(df_remove)
-df_remove <- relation_combine(df_remove)
-df_remove <- cap_gain_clean_outlier(df_remove)
+df_remove_feat = education_median(df_remove_feat)
+df_remove_feat$`education-num` <- NULL
+df_remove_feat <- age_combine(df_remove_feat)
+df_remove_feat = race_combine(df_remove_feat) 
+df_remove_feat <- marital_combine(df_remove_feat)
+df_remove_feat <- occupation_combine(df_remove_feat)
+df_remove_feat <- country_combine(df_remove_feat)
+df_remove_feat <- workclass_combine(df_remove_feat)
+df_remove_feat <- relation_combine(df_remove_feat)
+df_remove_feat <- cap_gain_clean_outlier(df_remove_feat)
 
-quant <- quantile(df_remove$`hours-per-week`,seq(0,1,.10))
-df_remove <- hours_combine(df_remove)
-df_remove <- Income_factor(df_remove)
-df_remove <- factorize(df_remove)
+quant <- quantile(df_remove_feat$`hours-per-week`,seq(0,1,.10))
+df_remove_feat <- hours_combine(df_remove_feat)
+df_remove_feat <- Income_factor(df_remove_feat)
+df_remove_feat <- factorize(df_remove_feat)
 ```
 
-Making CSV files of our datasets
+Making RSD files of our datasets
 ```{r}
 #Exporting as a CSV
-write.csv(df_feat, "data/EDA_feat_OG.csv", row.names = FALSE)
-write.csv(df, "data/EDA_OG.csv", row.names = FALSE)
-write.csv(df_impute, "data/EDA_feat_imp.csv", row.names=FALSE)
-write.csv(df_remove, "data/EDA_feat_rem.csv", row.names = FALSE)
+saveRDS(df_impute, "df_impute.rds")
+saveRDS(df_impute_feat, "df_impute_feat.rds")
+
+saveRDS(df_remove, "df_remove.rds")
+saveRDS(df_remove_feat, "df_remove_feat.rds")
 
 ```
