@@ -291,7 +291,7 @@ df_feat = race_combine(df_feat)
    dat$gen_mrg  = gen_mrg 
    return (dat)
  }
-df_feat = df_feat(df_feat)
+df_feat = mrg_combine(df_feat)
 ```
 
 
@@ -384,9 +384,13 @@ Thus we will do the following transformation:
 
 ```{r}
 variable_transform = function(dat){
-  dat$age = log(dat$age)
   dat$fnlwgt = log(dat$fnlwgt)
+  return (dat)
 }
+
+df_feat = variable_transform(df_feat)
+
+
 ```
 
 
