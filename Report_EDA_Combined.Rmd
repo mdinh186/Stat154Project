@@ -284,9 +284,9 @@ We decide to break age into 7 bins of ranges, to improve classification:
 
 ```{r}
 age_combine <- function(data){
-  data <- data.table(data)
   data$'age' <- cut(data$age, c(seq(14,74, 10), 90), labels = 1:7)
   data$'age' <- as.factor(data$'age')
+  data
 }
 
 df_feat <- age_combine(df_feat)
@@ -311,7 +311,7 @@ race_combine = function(dat){
   dat <- data.table(dat)
   dat$race = as.character(dat$race)
   race = unique(dat$race)
-  dat[, race := ifelse(race ==" Amer-Indian-Eskimo", "Other", race)] 
+  dat[, race := ifelse(race ==" Amer-Indian-Eskimo", " Other", race)] 
   dat$sex = as.character(dat$sex)
   sex = unique(dat$sex)
   gen_race = rep("NA", nrow(dat))
@@ -359,6 +359,7 @@ marital_combine <- function(data){
         "^ Married-AF-spouse","Has-Spouse",data$marital_status)
     data$marital_status = gsub(
         "^ Married-civ-spouse","Has-Spouse",data$marital_status)
+    data
 }
 
 df_feat <- marital_combine(df_feat)
@@ -370,8 +371,8 @@ tbl_marital
 
 4. marital-status and sex
 ```{r}
- mrg_combine = function(dat){
-   dat <- data.table(dat)
+mrg_combine = function(dat){
+  dat <- data.table(dat)
    dat$`marital-status` = as.character(dat$`marital-status`)
    mrg = unique(dat$`marital-status`)
    
@@ -392,7 +393,7 @@ tbl_marital
    gen_mrg  = gsub(gen_mrg , pattern = " ", replacement = "")
    dat$gen_mrg  = gen_mrg 
    return (dat)
- }
+ } ###Need clarification
 df_feat = df_feat(df_feat) #Not sure what's going on here - ask My? Mrg_combine it?
 ```
 
@@ -401,7 +402,7 @@ Splitting up Occupation was largely based on three levels - white vs blue collar
   
 ```{r} 
 occupation_combine <- function(data){
-  data <- as.data.frame(data)
+    data <- as.data.frame(data)
     data$occupation =   
           gsub("^ Adm-clerical","White Collar Not Skilled",data$occupation)
     data$occupation =   
@@ -430,6 +431,7 @@ occupation_combine <- function(data){
           gsub("^ Tech-support","White Collar Services",data$occupation)
     data$occupation = 
           gsub("^ Transport-moving","Blue-Collar Services",data$occupation)
+    data
 } 
 
 df_feat <- occupation_combine(df_feat)
@@ -459,7 +461,7 @@ The groupings are:
   
 ```{r}
 country_combine <- function(data){
-  data <- as.data.frame(data)
+    data <- as.data.frame(data)
       data$native_country = gsub(
           "^ Cambodia","South Asia, 1",data$native_country)
       data$native_country = gsub(
@@ -557,6 +559,7 @@ country_combine <- function(data){
       vecc <- which(data$native_country == 
                       " Outlying-US(Guam-USVI-etc)")
       data$native_country[vecc] <- "Carribean-1"
+      data
 }
       
 df_feat <- country_combine(df_feat)
@@ -569,7 +572,7 @@ The workclass variable currently has 8 different levels - Federal-gov, Local-goc
 
 ```{r}
 workclass_combine <- function(data){
-  data <- as.data.frame(data)
+    data <- as.data.frame(data)
   data$workclass = gsub(
         "^ Federal-gov","Gov",data$workclass)
     data$workclass = gsub(
@@ -586,6 +589,7 @@ workclass_combine <- function(data){
         "^ Without-pay","Not-Working",data$workclass)
     data$workclass = gsub(
         "^ Never-worked","Not-Working",data$workclass)
+    data
 }
 
 df_feat <- workclass_combine(df_feat)
@@ -600,7 +604,7 @@ For relationships, this is the relationship of the surveyor to a central househo
 
 ```{r}
 relation_combine <- function(data){
-  data <- as.data.frame(data)
+    data <- as.data.frame(data)
   data$relationship = gsub(
         "^ Husband","Spouse",data$relationship)
     data$relationship = gsub(
@@ -613,6 +617,7 @@ relation_combine <- function(data){
         "^ Unmarried","Not-relative",data$relationship)
     data$relationship = gsub(
         "^ Not-in-family","Not-relative",data$relationship)
+    data
 }
 
 df_feat <- relation_combine(df_feat)
@@ -625,9 +630,10 @@ tbl_relat
 We noticed that there appear to be outliers for capital gain (there was a chunk of data that had values of over 99999). As such, we decided to change these outlier values to the mean value of the capital gains.
 ```{r}
 cap_gain_clean_outlier <- function(data){
-  data <- as.data.frame(data)
+    data <- as.data.frame(data)
   mean_cg <- mean(data$'capital-gain')
   data$`capital-gain`[which(data$`capital-gain` == 99999)] <- mean_cg
+  data
 } 
 
 df_feat <- cap_gain_clean_outlier(df_feat)
@@ -650,10 +656,11 @@ For the hours-per-week worked, we decided to bin the data together based off of 
 quant <- quantile(df$`hours-per-week`,seq(0,1,.10))
 
 hours_combine <- function(data){
-  data <- as.data.frame(data)
+    data <- as.data.frame(data)
   data$`hours-per-week` <-
   cut(data$`hours-per-week`,
       unique(quant),include.lowest=TRUE)
+  data
 }
 
 df_feat <- hours_combine(df_feat)
@@ -663,10 +670,12 @@ df_feat <- hours_combine(df_feat)
 For income (1 if over 50K, 0 if less)
 ```{r}
 Income_factor <- function(data){
+    data <- as.data.frame(data)
   data$income = gsub(
     "^ <=50K",0,data$income)
   data$income = gsub(
     "^ >50K",1,data$income)
+  data
 }
 
 df_feat <- Income_factor(df_feat)
@@ -675,9 +684,10 @@ df_feat <- Income_factor(df_feat)
 As one more precaution, we confirm that everything that we just changed that should be a factor is a factor. 
 ```{r}
 factorize <- function(data){
-  data <- as.data.frame(data)
+    data <- as.data.frame(data)
     cols <- c("age", "workclass", 'education', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 'native_country', 'income') #no finl-weight because that is continuous
     data[cols] <- lapply(data[cols], as.factor)
+    data
 }
 
 df_feat <- factorize(df_feat)
