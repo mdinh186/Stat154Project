@@ -270,15 +270,15 @@ df_feat = race_combine(df_feat)
 
 ```{r}
  mrg_combine = function(dat){
-   dat$`martial-status` = as.character(dat$`martial-status`)
-   mrg = unique(dat$`martial-status`)
+   dat$marital_status = as.character(dat$marital_status)
+   mrg = unique(dat$marital_status)
    
    dat$sex = as.character(dat$sex)
    sex = unique(dat$sex)
    gen_mrg = rep("NA", nrow(dat))
    for (i in 1:nrow(dat)){
      for (m in mrg){
-       if (dat$`martial-status`[i] == m){
+       if (dat$marital_status[i] == m){
          if (dat$sex[i] == " Female"){
            gen_mrg [i] = paste0("f", substr(m, 1, 3))
          } else{
@@ -291,7 +291,12 @@ df_feat = race_combine(df_feat)
    dat$gen_mrg  = gen_mrg 
    return (dat)
  }
-df_feat = mrg_combine(df_feat)
+df_origin = data.table(df_origin)
+df_feat = mrg_combine(df_origin)
+df_feat$gen_race = as.factor(df_feat$gen_race)
+df_feat$gen_mrg = as.factor(df_feat$gen_mrg)
+
+saveRDS(df_feat, "df_impute_feat.rds")
 ```
 
 
@@ -388,10 +393,6 @@ variable_transform = function(dat){
   return (dat)
 }
 
-df_feat = variable_transform(df_feat)
-
 
 ```
-
-
 

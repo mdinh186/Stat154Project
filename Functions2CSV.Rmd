@@ -45,8 +45,8 @@ dataNoNA <- na.omit(df) #OKAY not a function but we might need it for the test
 
 #Feature selection functions
 ```{r}
-combine_education = function(dat){
-  dat <- data.table(dat)
+combine_education = function(data){
+  dat <- data.table(data)
   dat$education = as.character(dat$education)
   level1 = c(" Preschool"," 1st-4th", " 5th-6th", " 7th-8th")
   dat[,education := ifelse(education %in% level1, "Less than highschool",education)] 
@@ -59,8 +59,8 @@ combine_education = function(dat){
   dat[,education := ifelse(education %in% level4, "Doctorate or Professional",education)] 
   return (dat)
 }
-education_median = function(dat){
-  dat <- data.table(dat)
+education_median = function(data){
+  dat <- data.table(data)
   degree = unique(dat$education)
   degree_median_income = data.frame(education = degree, 
                                     Edu_Mean_income = c(52370,30071,17543,61045,35879,40258,14275,78079))
@@ -72,8 +72,8 @@ age_combine <- function(data){
   data$'age' <- as.factor(data$'age')
   data
 }
-race_combine = function(dat){
-  dat <- data.table(dat)
+race_combine = function(data){
+  dat <- data.table(data)
   dat$race = as.character(dat$race)
   race = unique(dat$race)
   dat[, race := ifelse(race ==" Amer-Indian-Eskimo", " Other", race)] 
@@ -114,6 +114,7 @@ marital_combine <- function(data){
         "^ Married-civ-spouse","Has-Spouse",data$marital_status)
     data
 }
+
 occupation_combine <- function(data){
     data <- as.data.frame(data)
     data$occupation =   
@@ -311,8 +312,8 @@ factorize <- function(data){
     data
 }
 
-mrg_combine = function(dat){
-  dat <- data.table(dat)
+mrg_combine = function(data){
+  dat <- data.table(data)
    dat$`marital-status` = as.character(dat$`marital-status`)
    mrg = unique(dat$`marital-status`)
    
