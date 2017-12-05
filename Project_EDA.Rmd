@@ -296,7 +296,7 @@ df_feat = mrg_combine(df_origin)
 df_feat$gen_race = as.factor(df_feat$gen_race)
 df_feat$gen_mrg = as.factor(df_feat$gen_mrg)
 
-saveRDS(df_feat, "df_impute_feat.rds")
+
 ```
 
 

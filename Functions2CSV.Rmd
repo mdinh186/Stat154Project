@@ -61,10 +61,11 @@ combine_education = function(data){
 }
 education_median = function(data){
   dat <- data.table(data)
-  degree = unique(dat$education)
-  degree_median_income = data.frame(education = degree, 
-                                    Edu_Mean_income = c(52370,30071,17543,61045,35879,40258,14275,78079))
-  dat = merge(dat, degree_median_income, by = "education")
+  degree = sort(unique(dat$education))
+  degree_median_inc = data.frame(education = degree, 
+                                    Edu_Mean_inc = c(52857, 64960,37156,42118,81007,31376,18298,15043))
+  dat = merge(dat, degree_median_inc, by = "education")
+  dat$education = NULL
   return (dat)
 }
 age_combine <- function(data){
@@ -259,9 +260,13 @@ workclass_combine <- function(data){
     data$workclass = gsub(
         "^ Private","Private",data$workclass)
     data$workclass = gsub(
-        "^ Self-emp-inc","Self-Employed-Incorp",data$workclass)
+        "^ Self-emp-
+","Self-Employed-
+        orp",data$workclass)
     data$workclass = gsub(
-        "^ Self-emp-not-inc","Self-Employed-Not-Incorp",data$workclass)
+        "^ Self-emp-not-
+","Self-Employed-Not-
+        orp",data$workclass)
     data$workclass = gsub(
         "^ Without-pay","Not-Working",data$workclass)
     data$workclass = gsub(
@@ -294,20 +299,16 @@ hours_combine <- function(data){
     data <- as.data.frame(data)
   data$`hours-per-week` <-
   cut(data$`hours-per-week`,
-      unique(quant),include.lowest=TRUE)
+      unique(quant),
+      lude.lowest=TRUE)
   data
 }
-Income_factor <- function(data){
-    data <- as.data.frame(data)
-  data$income = gsub(
-    "^ <=50K",0,data$income)
-  data$income = gsub(
-    "^ >50K",1,data$income)
-  data
-}
+
+
 factorize <- function(data){
     data <- as.data.frame(data)
-    cols <- c("age", "workclass", 'education', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 'native_country', 'income') #no finl-weight because that is continuous
+    cols <- c("age", "workclass", 'education', 'marital_status', 'occupation', 'relationship', 'race', 'sex', 'native_country', '
+              ome') #no finl-weight because that is continuous
     data[cols] <- lapply(data[cols], as.factor)
     data
 }
@@ -334,7 +335,12 @@ mrg_combine = function(data){
    gen_mrg  = gsub(gen_mrg , pattern = " ", replacement = "")
    dat$gen_mrg  = gen_mrg 
    return (dat)
- } ###Need clarification
+ } 
+
+
+
+
+
 
 ```
 
@@ -352,7 +358,8 @@ df_impute_feat =  combine_education(dataMissForestImputed)
 names(df_impute_feat) <- c("age", "workclass", "fnlwgt", "education", "education-num", 
               "marital_status", "occupation", "relationship", "race", "sex",
               "capital-gain", "capital-loss", "hours-per-week",
-              "native_country","income")
+              "native_country","
+              ome")
 df_impute_feat = education_median(df_impute_feat)
 df_impute_feat$`education-num` <- NULL
 df_impute_feat <- age_combine(df_impute_feat)
@@ -366,7 +373,8 @@ df_impute_feat <- cap_gain_clean_outlier(df_impute_feat)
 
 quant <- quantile(df_impute_feat$`hours-per-week`,seq(0,1,.10))
 df_impute_feat <- hours_combine(df_impute_feat)
-df_impute_feat <- Income_factor(df_impute_feat)
+df_impute_feat <- 
+  ome_factor(df_impute_feat)
 df_impute_feat <- factorize(df_impute_feat)
 
 ```
@@ -382,7 +390,8 @@ df_remove_feat =  combine_education(dataNoNA)
 names(df_remove_feat) <- c("age", "workclass", "fnlwgt", "education", "education-num", 
               "marital_status", "occupation", "relationship", "race", "sex",
               "capital-gain", "capital-loss", "hours-per-week",
-              "native_country","income")
+              "native_country","
+              ome")
 df_remove_feat = education_median(df_remove_feat)
 df_remove_feat$`education-num` <- NULL
 df_remove_feat <- age_combine(df_remove_feat)
@@ -396,7 +405,8 @@ df_remove_feat <- cap_gain_clean_outlier(df_remove_feat)
 
 quant <- quantile(df_remove_feat$`hours-per-week`,seq(0,1,.10))
 df_remove_feat <- hours_combine(df_remove_feat)
-df_remove_feat <- Income_factor(df_remove_feat)
+df_remove_feat <- 
+  ome_factor(df_remove_feat)
 df_remove_feat <- factorize(df_remove_feat)
 ```
 
@@ -410,3 +420,44 @@ saveRDS(df_remove, "df_remove.rds")
 saveRDS(df_remove_feat, "df_remove_feat.rds")
 
 ```
+
+
+
+
+####table 7 
+#### sex-mariage, sex
+
+#######
+```{r}
+
+
+#####################################
+#get median income generated from gen_mrg (gender x mariage status column) and gender columns
+gen_med = function(data){
+  gender = sort(unique(data$sex))
+  gen_med_inc = data.table(sex = gender, 
+                           Gen_Med_Inc = c( 22834,31728))
+  gen_mrg = sort(unique(data$gen_mrg))
+  gen_mrg_med_inc = data.table(gen_mrg = gen_mrg,Gen_Med_Mrg_Inc = c(20435,46317,15372, 15372,31336,46317,25290,25290))
+  data = merge(data, gen_med_inc, by = "sex")
+  data = merge(data, gen_mrg_med_inc, by = "gen_mrg")
+  data$gen_mrg = NULL
+  data$sex = NULL
+  return (data)
+}
+
+
+
+race_med = function(data){
+  race = sort(unique(data$race))
+  race_med_inc= data.table(race = race, 
+                                Race_Med_Inc = c(17381, 10952,9702,18110))
+  data = merge(data, race_med_inc, by = "race")
+  data$race = NULL
+  return(data)
+}
+
+
+
+```
+
