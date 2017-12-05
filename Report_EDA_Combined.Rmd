@@ -170,36 +170,36 @@ NA_imputes <- function(data){
       }
 
 #function for imputing missing values
-dataMissForestImputed <- NA_imputes(df)
+df_impute <- NA_imputes(df)
 ```
 
 #####Plots of the data before and after imputation
 ```{r}
 plot(df$occupation)
-plot(dataMissForestImputed$occupation, col = rgb(1,0,0,1/4), add=T)
+plot(df_impute$occupation, col = rgb(1,0,0,1/4), add=T)
 
 plot(df$workclass, col = rgb(0, 1, 1, 1/8))
-plot(dataMissForestImputed$workclass, col = rgb(1,0,0,1/10), add=T)
+plot(df_impute$workclass, col = rgb(1,0,0,1/10), add=T)
 
 plot(df$native_country, col = rgb(0, 1, 1, 1/8))
-plot(dataMissForestImputed$native_country, col = rgb(1,0,0,1/16), add=T)
+plot(df_impute$native_country, col = rgb(1,0,0,1/16), add=T)
 ```
 
 ####Removing NAs:
 ```{r}
-dataNoNA <- na.omit(df)
+df_remove <- na.omit(df)
 ```
 
 #####Plots of the data before and after imputation
 ```{r}
 plot(df$occupation)
-plot(dataNoNA$occupation, col = rgb(1,0,0,1/4), add=T)
+plot(df_remove$occupation, col = rgb(1,0,0,1/4), add=T)
 
 plot(df$workclass, col = rgb(0, 1, 1, 1/8))
-plot(dataNoNA$workclass, col = rgb(1,0,0,1/10), add=T)
+plot(df_remove$workclass, col = rgb(1,0,0,1/10), add=T)
 
 plot(df$native_country, col = rgb(0, 1, 1, 1/8))
-plot(dataNoNA$native_country, col = rgb(1,0,0,1/16), add=T)
+plot(df_remove$native_country, col = rgb(1,0,0,1/16), add=T)
 ```
 
 As we have now addressed our missing values, we can move onto examining our various features of the data.
