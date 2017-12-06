@@ -100,7 +100,6 @@ race_combine = function(data){
    }
    gen_race = gsub(gen_race, pattern = " ", replacement = "")
    dat$gen_race = gen_race
-   dat$race <- NULL
    return (dat)
 } #This one always does something weird
 marital_combine <- function(data){
@@ -127,7 +126,6 @@ occup_sex_med = function(dat){
   medians <- c(21023, 41410, 10905, 26449, 25980, 7059, 41090, 15880, 25790, 24681, 21546, 10431, 20621, 22524, 30642, 11823, 11746,9070, 15815, 12095, 11686, 7453, 7893, 23656, 3287, 4223, 11746)
   x.lvl <- unique(interacts)
     dat$occ_sex <- medians[match(interacts, x.lvl)]
-    dat$sex <- NULL
     dat
 }
 
@@ -322,15 +320,15 @@ hours_combine <- function(data){
 
 mrg_combine = function(data){
   dat <- data.table(data)
-   dat$`marital-status` = as.character(dat$`marital-status`)
-   mrg = unique(dat$`marital-status`)
+   dat$marital_status = as.character(dat$marital_status)
+   mrg = unique(dat$marital_status)
    
    dat$sex = as.character(dat$sex)
    sex = unique(dat$sex)
    gen_mrg = rep("NA", nrow(dat))
    for (i in 1:nrow(dat)){
      for (m in mrg){
-       if (dat$`marital-status`[i] == m){
+       if (dat$marital_status[i] == m){
          if (dat$sex[i] == " Female"){
            gen_mrg [i] = paste0("f", substr(m, 1, 3))
          } else{
@@ -344,6 +342,26 @@ mrg_combine = function(data){
    return (dat)
  } 
 
+gen_med = function(data){
+  gender = sort(unique(data$sex))
+  gen_med_inc = data.table(sex = gender, 
+                           Gen_Med_Inc = c( 22834,31728))
+  gen_mrg = sort(unique(data$gen_mrg))
+  gen_mrg_med_inc = data.table(gen_mrg = gen_mrg,Gen_Med_Mrg_Inc = c(20435,46317,15372, 15372,31336,46317,25290,25290))
+  data = merge(data, gen_med_inc, by = "sex")
+  data = merge(data, gen_mrg_med_inc, by = "gen_mrg")
+  data$gen_mrg = NULL
+  return (data)
+}
+
+race_med = function(data){
+  race = sort(unique(data$race))
+  race_med_inc= data.table(race = race, 
+                                Race_Med_Inc = c(17381, 10952,9702,18110))
+  data = merge(data, race_med_inc, by = "race")
+  data$race = NULL
+  return(data)
+}
 
 
 
@@ -371,15 +389,18 @@ df_impute_feat$`education-num` <- NULL
 df_impute_feat <- age_combine(df_impute_feat)
 df_impute_feat <- age_median(df_impute_feat)
 df_impute_feat = race_combine(df_impute_feat) 
+df_impute_feat <- race_med(df_impute_feat)
+
 df_impute_feat <- marital_combine(df_impute_feat)
 df_impute_feat <- occup_sex_med(df_impute_feat)
 df_impute_feat <- occupation_combine(df_impute_feat)
+df_impute_feat <- mrg_combine(df_impute_feat)
+df_impute_feat <- gen_med(df_impute_feat)
 df_impute_feat <- country_combine(df_impute_feat)
 df_impute_feat <- workclass_combine(df_impute_feat)
 df_impute_feat <- relation_combine(df_impute_feat)
 df_impute_feat <- cap_gain_clean_outlier(df_impute_feat)
 
-quant <- quantile(df_impute_feat$`hours-per-week`,seq(0,1,.10))
 
 ```
 
@@ -400,9 +421,12 @@ df_remove_feat$`education-num` <- NULL
 df_remove_feat <- age_combine(df_remove_feat)
 df_remove_feat <- age_median(df_remove_feat)
 df_remove_feat = race_combine(df_remove_feat) 
+df_remove_feat = race_med(df_remove_feat)
 df_remove_feat <- marital_combine(df_remove_feat)
 df_remove_feat <- occup_sex_med(df_remove_feat)
 df_remove_feat <- occupation_combine(df_remove_feat)
+df_remove_feat <- mrg_combine(df_remove_feat)
+df_remove_feat <- gen_med(df_remove_feat)
 df_remove_feat <- country_combine(df_remove_feat)
 df_remove_feat <- workclass_combine(df_remove_feat)
 df_remove_feat <- relation_combine(df_remove_feat)
@@ -432,29 +456,6 @@ saveRDS(df_remove_feat, "df_remove_feat.rds")
 
 #####################################
 #get median income generated from gen_mrg (gender x mariage status column) and gender columns
-gen_med = function(data){
-  gender = sort(unique(data$sex))
-  gen_med_inc = data.table(sex = gender, 
-                           Gen_Med_Inc = c( 22834,31728))
-  gen_mrg = sort(unique(data$gen_mrg))
-  gen_mrg_med_inc = data.table(gen_mrg = gen_mrg,Gen_Med_Mrg_Inc = c(20435,46317,15372, 15372,31336,46317,25290,25290))
-  data = merge(data, gen_med_inc, by = "sex")
-  data = merge(data, gen_mrg_med_inc, by = "gen_mrg")
-  data$gen_mrg = NULL
-  data$sex = NULL
-  return (data)
-}
-
-
-
-race_med = function(data){
-  race = sort(unique(data$race))
-  race_med_inc= data.table(race = race, 
-                                Race_Med_Inc = c(17381, 10952,9702,18110))
-  data = merge(data, race_med_inc, by = "race")
-  data$race = NULL
-  return(data)
-}
 
 ```
 
