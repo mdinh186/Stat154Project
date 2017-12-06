@@ -672,9 +672,9 @@ For income (1 if over 50K, 0 if less)
 Income_factor <- function(data){
     data <- as.data.frame(data)
   data$income = gsub(
-    "^ <=50K",0,data$income)
+    "^ <=50K","Less.than.50k",data$income)
   data$income = gsub(
-    "^ >50K",1,data$income)
+    "^ >50K","More.than.50k",data$income)
   data
 }
 
