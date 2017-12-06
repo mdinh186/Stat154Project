@@ -75,7 +75,7 @@ varImp(rf_default)
 
 
 #### impute without feature: 
-#### Accuary: train:82.7?%
+#### Accuracy: train:82.7?%
 
 # Reference
 # Prediction  <=50K  >50K
@@ -110,15 +110,10 @@ varImp(rf_default)
 # <=50K   4602   322
 # >50K     589   999
 
-
-
 # Reference
 # Prediction Less.50k More.50k
 # Less.50k     4571      377
 # More.50k      567      997
-
-
-
 
 # Reference
 # Prediction Less.50k More.50k
@@ -143,10 +138,62 @@ mtry = sqrt(ncol(xtrain_origin))
 rf_random = train(xtrain_origin, ytrain_origin, method = "rf", 
                   tuneLength = 15, trControl=control)
 
-
+###rf_random results:
+#      Random Forest 
+      
+ #     26049 samples
+#      16 predictor
+#      2 classes: 'Less.50k', 'More.50k' 
+      
+      # No pre-processing
+      # Resampling: Cross-Validated (5 fold) 
+      # Summary of sample sizes: 20840, 20839, 20838, 20839, 20840 
+      # Resampling results across tuning parameters:
+      #   
+      #   mtry  Accuracy   Kappa    
+      # 1    0.8393417  0.4751006
+      # 4    0.8607242  0.6003849
+      # 5    0.8574229  0.5924602
+      # 9    0.8520486  0.5776796
+      # 10    0.8510505  0.5758396
+      # 11    0.8506280  0.5743715
+      # 12    0.8501290  0.5736396
+      # 14    0.8507819  0.5746413
+      # 15    0.8502445  0.5733095
+      # 
+      # Accuracy was used to select the optimal model using the
+      # largest value.
+      # The final value used for the model was mtry = 4.
+      
+    
 pred = predict(rf_random, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
-###################################
+
+###Confusion Matrix and Statistics
+      # Accuracy : 0.859           
+      # 95% CI : (0.8503, 0.8674)
+      # No Information Rate : 0.7919          
+      # P-Value [Acc > NIR] : < 2.2e-16       
+      # 
+      # Kappa : 0.5964          
+      # Mcnemar's Test P-Value : 4.899e-13       
+      # 
+      # Sensitivity : 0.7424          
+      # Specificity : 0.8897          
+      # Pos Pred Value : 0.6387          
+      # Neg Pred Value : 0.9293          
+      # Prevalence : 0.2081          
+      # Detection Rate : 0.1545          
+      # Detection Prevalence : 0.2419          
+      # Balanced Accuracy : 0.8160          
+      # 
+      # 'Positive' Class : More.50k
+################################### This is for the current data set?
+# Prediction Less.50k More.50k
+# Less.50k     4588      349
+# More.50k      569     1006
+
+################################### I think this was the the last dataset (before we input everything?)
 # Prediction Less.50k More.50k
 # Less.50k     4602      346
 # More.50k      560     1004
@@ -158,4 +205,49 @@ tunegrid = expand.grid(.mtry = c(4:7))
 rf_gridsearch = train(xtrain_origin, ytrain_origin, method = "rf",
                       tuneGrid=tunegrid, trControl=control2)
 
+###rf_gridsearch results
+        # Random Forest 
+        # 
+        # 26049 samples
+        # 16 predictor
+        # 2 classes: 'Less.50k', 'More.50k' 
+        # 
+        # No pre-processing
+        # Resampling: Cross-Validated (5 fold) 
+        # Summary of sample sizes: 20839, 20839, 20840, 20840, 20838 
+        # Resampling results across tuning parameters:
+        #   
+        #   mtry  Accuracy   Kappa    
+        # 4     0.8610310  0.6008713
+        # 5     0.8593804  0.5965750
+        # 6     0.8568851  0.5901975
+        # 7     0.8553879  0.5864568
+        # 
+        # Accuracy was used to select the optimal model using the
+        # largest value.
+        # The final value used for the model was mtry = 4.
 
+pred_grid = predict(rf_random, xtest_origin)
+confusionMatrix(ytest_origin, pred_grid, positive = "More.50k")
+# Prediction Less.50k More.50k
+# Less.50k     4600      337
+# More.50k      568     1007 
+      # Confusion Matrix and Statistics
+      # Accuracy : 0.861           
+      # 95% CI : (0.8524, 0.8693)
+      # No Information Rate : 0.7936          
+      # P-Value [Acc > NIR] : < 2.2e-16       
+      # 
+      # Kappa : 0.6011          
+      # Mcnemar's Test P-Value : 2.082e-14       
+      # 
+      # Sensitivity : 0.7493          
+      # Specificity : 0.8901          
+      # Pos Pred Value : 0.6394          
+      # Neg Pred Value : 0.9317          
+      # Prevalence : 0.2064          
+      # Detection Rate : 0.1546          
+      # Detection Prevalence : 0.2419          
+      # Balanced Accuracy : 0.8197          
+      # 
+      # 'Positive' Class : More.50k 
