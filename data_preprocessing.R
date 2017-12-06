@@ -48,6 +48,14 @@ age_combine <- function(data){
   data$'age' <- as.factor(data$'age')
   data
 }
+
+age_median = function(dat){
+  Age_med_inc = c(19340, 33151, 41667, 47261, 35232,  21422, 14731)
+  xf <- as.factor(dat$age)
+  dat$age <- Age_med_inc[xf]
+  dat
+}
+
 race_combine = function(data){
   dat <- data.table(data)
   dat$race = as.character(dat$race)
@@ -90,6 +98,15 @@ marital_combine <- function(data){
   data$marital_status = gsub(
     "^ Married-civ-spouse","Has-Spouse",data$marital_status)
   data
+}
+
+occup_sex_med = function(dat){
+  interacts <- interaction(dat$sex,dat$occupation)
+  medians <- c(21023, 41410, 10905, 26449, 25980, 7059, 41090, 15880, 25790, 24681, 21546, 10431, 20621, 22524, 30642, 11823, 11746,9070, 15815, 12095, 11686, 7453, 7893, 23656, 3287, 4223, 11746)
+  x.lvl <- unique(interacts)
+  dat$occ_sex <- medians[match(interacts, x.lvl)]
+  dat$sex <- NULL
+  dat
 }
 
 occupation_combine <- function(data){
@@ -344,16 +361,17 @@ data_processing = function(data){
   
   ### feature engineering: 
   data = age_combine(data)
+  data = age_median(data)
   data = combine_education(data)
   data = education_median(data)
   data = race_combine(data)
   data = marital_combine(data)
+  data = occup_sex_med(data)
   data = occupation_combine(data)
   data = country_combine(data)
   data = workclass_combine(data)
   data = relation_combine(data)
   data = cap_gain_clean_outlier(data)
-  data = factorize(data)
   data = mrg_combine(data)
   data = gen_med(data)
   data = race_med(data)
