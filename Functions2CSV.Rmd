@@ -299,8 +299,20 @@ hours_combine <- function(data){
     data <- as.data.frame(data)
   data$`hours-per-week` <-
   cut(data$`hours-per-week`,
+<<<<<<< Updated upstream
       unique(quant),
       lude.lowest=TRUE)
+=======
+      unique(quant),include.lowest=TRUE)
+  data
+}
+Income_factor <- function(data){
+    data <- as.data.frame(data)
+  data$income = gsub(
+    "^ <=50K","Less.than.50k",data$income)
+  data$income = gsub(
+    "^ >50K","More.than.50k",data$income)
+>>>>>>> Stashed changes
   data
 }
 
