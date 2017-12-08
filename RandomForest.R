@@ -434,9 +434,7 @@ confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
 
 
-
-
-
+nmax  = max(table(ytrain_origin))
 
 weighted_up_fit = train(xtrain_origin, ytrain_origin, method = "rf", 
                           tuneLength = 15, 
