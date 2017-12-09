@@ -233,39 +233,50 @@ down_fit = train(xtrain_origin, ytrain_origin, method = "rf",
                  trControl = control5)
 pred = predict(down_fit, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
-     
+#       Prediction Less.50k More.50k
+#       Less.50k     4049      895
+#       More.50k      251     1317
+#       
+#       Accuracy : 0.824  
+
 ############################
 # up sample with ROC
 control5$sampling = "up"
 up_fit = train(xtrain_origin, ytrain_origin, method = "parRF", 
-               verbose = F, metric = "ROC",  mtry = ncol(xtrain_origin),
+               verbose = F, metric = "ROC",  tuneGrid = tunegrid, ntree= 200,
                trControl = control5)
 pred = predict(up_fit, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
+      # Prediction Less.50k More.50k
+      # Less.50k     4463      481
+      # More.50k      498     1070
+      # 
+      # Accuracy : 0.8497
 
 ############################
-
-
-custom_col = c("#000000", "#009E73", "#0072B2", "#D55E00", "#CC79A7")
+model_list2 = list(original = rf_strata, 
+                   down = down_fit, 
+                   up = up_fit)
+custom_col = c("#000000", "#009E73", "#0072B2")
 model_roc_plot(model_list2, custom_col)
+model_roc_plot(model_list2, custom_col, AUC = T)
 
+plot(varImp(model_rf_under))
 
-
-##Looking at most important variables:
-varImp()
-varImpPlot()
-cartModel$variable.importance
-plot(cartModel)
-text(cartModel, cex = 0.5)
-plotcp(cartModel)
-
-
-######################ROC curve and AUC value
-library(ROCR)
-
-pred_ROC <-prediction(cart.pred_1, ytest_origin)
-perf <- performance(pred_ROC, measure = "tpr", x.measure = "fpr")
-plot(perf)
-abline(coef=c(0,1), col = "grey")
-AUC <- performance(pred_ROC,"auc")
-AUC@y.values
+#Highest AUC is for model_rf_under
+#       relationship    100.000
+#       fnlwgt           79.134
+#       capital-gain     32.090
+#       Edu_Mean_inc     31.201
+#       hours-per-week   28.622
+#       occupation       24.553
+#       age              19.182
+#       occ_sex          15.137
+#       workclass         8.444
+#       capital-loss      7.119
+#       Gen_Med_Mrg_Inc   5.045
+#       native_country    4.377
+#       gen_race          4.276
+#       Race_Med_Inc      1.398
+#       marital_status    0.945
+#       Gen_Med_Inc       0.000
