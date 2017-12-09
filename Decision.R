@@ -14,11 +14,7 @@ set.seed(123)
 df_impute = readRDS("data/df_impute_feat.rds")
 df_impute = data.table(df_impute)
 #saveRDS(df_impute,"data/df_impute_feat.rds")
-n = ceiling(nrow(df_impute) * 0.8)
-col = c( "workclass", "marital_status", "occupation", "relationship", "native_country","gen_race")
-df_impute[,(col):= lapply(.SD, function(x) as.factor(x)), .SDcols =col]
-df_impute$sex = NULL
-train_idx = sample(nrow(df_impute),n)
+train_idx = createDataPartition(df_impute$income, p =.8)[[1]]
 train_origin = df_impute[train_idx,]
 test_origin = df_impute[-train_idx, ]
 xtrain_origin  = train_origin[,-c("income")]
@@ -145,6 +141,20 @@ table(cart.pred, ytest_origin) #exact same as before
 ##Conclusion: pruning by CP doesn't much with our processed data
 #We'll use cartModel as our decision tree
 
+#Accuracy rate is 
+(4659 + 782)/sum(table(cart.pred_1, ytest_origin))
+
+#Plot the ROC curve, and report its area under the curve (AUC) statistic.
+library(ROCR)
+
+pred_ROC <-prediction(cart.pred_1, ytest_origin)
+perf <- performance(pred_ROC, measure = "tpr", x.measure = "fpr")
+plot(perf)
+abline(coef=c(0,1), col = "grey")
+AUC <- performance(pred_ROC,"auc")
+AUC@y.values
+
+
 ##Looking at most important variables:
 cartModel$variable.importance
 plot(cartModel)
@@ -159,3 +169,5 @@ barplot(plotting, cex.names  = 0.8, names.arg=names(ploting),las=2)
 
 #Top 7 most important variables:
 plotting[1:7]
+
+

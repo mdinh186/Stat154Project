@@ -20,124 +20,184 @@ cl = makeCluster(detectCores()-1)
 registerDoParallel(cl)
 #############################################################
 
+
+seed =123
+set.seed(seed)
 df_impute = readRDS("data/df_impute_feat.rds")
 df_impute = data.table(df_impute)
 
-#saveRDS(df_impute,"data/df_impute_feat.rds")
+split1 = createDataPartition(df_impute$income, p  = 0.8)[[1]]
 
-n = ceiling(nrow(df_impute) * 0.8)
+train_origin = df_impute[split1,]
+test_origin = df_impute[-split1, ]
+xtrain_origin = train_origin[, -c("income")]
+ytrain_origin = train_origin$income
+xtest_origin = test_origin[,-c("income")]
+ytest_origin = test_origin$income
+
+#saveRDS(df_impute,"data/df_impute_feat.rds")
 #############################################################
 # Prepocessing data:
 #############################################################
 
-train_idx = sample(nrow(df_impute),n)
-train_origin = df_impute[train_idx,]
-test_origin = df_impute[-train_idx, ]
-xtrain_origin  = train_origin[,-c("income")]
-ytrain_origin = train_origin$income
-
-xtest_origin  = test_origin[,-c("income")]
-ytest_origin = test_origin$income
-
-
 #######################################
 #make baseline models and feature sections
-
+tunegrid <- expand.grid(.mtry=16)
 
 control = trainControl(method = "cv", number = 5)
 rf_default  = train(x = xtrain_origin, y = ytrain_origin,
-                    method = "parRF", trControl = control, 
-                    importance= T, ntree = 100, replace= F, mtry = ncol(xtrain_origin))
+                    method = "rf", trControl = control, 
+                    importance= T, ntree = 100, tuneGrid = tunegrid, replace= F)
 rf_default
 pred = predict(rf_default, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
+      # Less.50k     4586      358
+      # More.50k      591      977
+      # 
+      # Accuracy : 0.8543          
+      # 95% CI : (0.8455, 0.8628)
+      # No Information Rate : 0.795           
+      # P-Value [Acc > NIR] : < 2.2e-16       
+      # 
+      # Kappa : 0.5801          
+      # Mcnemar's Test P-Value : 5.034e-14       
+      #                                           
+      #             Sensitivity : 0.7318          
+      #             Specificity : 0.8858          
+      #          Pos Pred Value : 0.6231          
+      #          Neg Pred Value : 0.9276          
+      #              Prevalence : 0.2050          
+      #          Detection Rate : 0.1500          
+      #    Detection Prevalence : 0.2408          
+      #       Balanced Accuracy : 0.8088  
 varImp(rf_default)
-
+      # capital-gain      100.0000
+      # capital-loss       54.2883
+      # relationship       51.0024
+      # Edu_Mean_inc       39.7952
+      # occupation         32.3488
+      # age                17.7601
+      # hours-per-week     15.0480
+      # gen_race            9.3028
+      # marital_status      7.4554
+      # workclass           6.0712
+      # occ_sex             4.6765
+      # Gen_Med_Mrg_Inc     2.8052
+      # native_country      1.0119
+      # Gen_Med_Inc         0.7164
+      # Race_Med_Inc        0.4876
+      # fnlwgt              0.0000
+plot(varImp(rf_default))
 
 ########################################################
+#TUNING
+# The only parameters when bagging decision trees is the number of samples and
+# hence the number of trees to include. This can be chosen by increasing the 
+# number of trees on run after run until the accuracy begins to stop showing 
+# improvement (e.g. on a cross validation test harness).
 
+control <- trainControl(method="cv", number=5, search="grid", summaryFunction = twoClassSummary, classProbs = T)
+tunegrid <- expand.grid(.mtry=16)
+modellist <- list()
+for (ntree in seq(50, 300, 50)) {
+  set.seed(seed)
+  fit <- train(xtrain_origin, ytrain_origin, method="rf", tuneGrid = tunegrid, metric="ROC", trControl=control, ntree=ntree)
+  key <- toString(ntree)
+  modellist[[key]] <- fit
+}
 
-pred = predict(rf_random, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
+# compare results
+results <- resamples(modellist)
+summary(results)
+dotplot(results)
+pred_50 = predict(modellist[['50']], xtest_origin)
+pred_100 = predict(modellist[['100']], xtest_origin)
+pred_150 = predict(modellist[['150']], xtest_origin)
+pred_200 = predict(modellist[['200']], xtest_origin)
+pred_250 = predict(modellist[['250']], xtest_origin)
+pred_300 = predict(modellist[['300']], xtest_origin)
 
-
-##### grid search: 
-control2 = trainControl(method = "cv", number = 5, search = "grid", allowParallel = TRUE)
-tunegrid = expand.grid(.ntress = seq(50, 300, 50))
-rf_gridsearch = train(xtrain_origin, ytrain_origin, method = "parRF",
-                      tuneGrid=tunegrid, mtry = ncol(xtrain_origin),
-                      trControl=control2)
-
-###rf_gridsearch results
-
-# The final value used for the model was mtry = 4.
-
-pred_grid = predict(rf_random, xtest_origin)
-confusionMatrix(ytest_origin, pred_grid, positive = "More.50k")
-
-
+confusionMatrix(pred_50, ytest_origin) #0.8557
+confusionMatrix(pred_100, ytest_origin) #0.8563
+confusionMatrix(pred_150, ytest_origin) #0.856
+confusionMatrix(pred_200, ytest_origin) #0.8564
+confusionMatrix(pred_250, ytest_origin) #0.8564
+confusionMatrix(pred_300, ytest_origin) #0.8564
 
 #############################################
 #Sampling technique for imbalanced class: 
 #############################################
 ######Under sampling: 
-
+tunegrid <- expand.grid(.mtry=16)
 
 ctrol = trainControl(method = "cv", number =5, 
                      verboseIter = F,
                      sampling = "down")
 set.seed(123)
-model_rf_under = train(xtrain_origin, ytrain_origin, method = "parRF",
-                       trControl = ctrol, mtry = ncol(xtrain_origin))
-
+model_rf_under = train(xtrain_origin, ytrain_origin, method = "rf",
+                       trControl = ctrol, tuneGrid = tunegrid, ntree=200)
 pred = predict(model_rf_under, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
-
+#       Less.50k     4084      860
+#       More.50k      235     1333
+#       
+#       Accuracy : 0.8318          
+#       95% CI : (0.8225, 0.8409)
+#       No Information Rate : 0.6632          
+#       P-Value [Acc > NIR] : < 2.2e-16       
+#       
+#       Kappa : 0.5952          
+#       Mcnemar's Test P-Value : < 2.2e-16       
+#       
+#       Sensitivity : 0.6078          
+#       Specificity : 0.9456          
+#       Pos Pred Value : 0.8501          
+#       Neg Pred Value : 0.8261          
+#       Prevalence : 0.3368          
+#       Detection Rate : 0.2047          
+#       Detection Prevalence : 0.2408          
+#       Balanced Accuracy : 0.7767 
 
 ctrol2 = trainControl(method = "cv", number =5, 
                       verboseIter = F,
                       sampling = "up")
 
-model_rf_over = train(xtrain_origin, ytrain_origin, method = "parRF",
-                      trControl = ctrol2, mtry = ncol(xtrain_origin))
-
-
+model_rf_over = train(xtrain_origin, ytrain_origin, method = "rf",
+                      trControl = ctrol2, tuneGrid = tunegrid, ntree=200)
 pred = predict(model_rf_over, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
+        # Prediction Less.50k More.50k
+        # Less.50k     4472      472
+        # More.50k      500     1068
+        # 
+        # Accuracy : 0.8507          
+        # 95% CI : (0.8418, 0.8593)
+        # No Information Rate : 0.7635          
+        # P-Value [Acc > NIR] : <2e-16          
+        # 
+        # Kappa : 0.5892          
+        # Mcnemar's Test P-Value : 0.3865          
+        # 
+        # Sensitivity : 0.6935          
+        # Specificity : 0.8994          
+        # Pos Pred Value : 0.6811          
+        # Neg Pred Value : 0.9045          
+        # Prevalence : 0.2365          
+        # Detection Rate : 0.1640          
+        # Detection Prevalence : 0.2408          
+        # Balanced Accuracy : 0.7965   
 
+cl = makeCluster(detectCores()-1)
+registerDoParallel(cl)
 
-# Reference
-# Prediction Less.50k More.50k
-# Less.50k     3928      993
-# More.50k      270     1321
-
-
-#### Smote: 
-ctrol4 = trainControl(method = "cv", number =5, 
-                      verboseIter = F,
-                      sampling = "smote")
-
-model_rf_smote = train(xtrain_origin, ytrain_origin, method = "parRF",
-                       trControl = ctrol4, mtry = ncol(xtrain_origin))
-
-pred = predict(model_rf_smote, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
-
-
-
-
-
-
+####  
 model_list1 = list(original = rf_default, 
-                   down =  model_rf_under, 
-                   up = model_rf_over, 
-                   smote = model_rf_smote)
+                   down = model_rf_under, 
+                   up = model_rf_over)
 
-custom_col = c("#000000", "#009E73", "#0072B2", "#D55E00")
+custom_col = c("#000000", "#009E73", "#0072B2")
 
 model_roc_plot(model_list1, custom_col)
-
-
 
 #########################################
 # Use ROC metric
@@ -149,59 +209,63 @@ control5 = trainControl(method = "cv", number = 5, search = "random",allowParall
                         summaryFunction = twoClassSummary, 
                         classProbs = T)
 
-rf_strata = train(xtrain_origin, ytrain_origin, method = "parRF", 
-                  mtry = ncol(xtrain_origin), trControl=control5, 
+rf_strata = train(xtrain_origin, ytrain_origin, method = "rf", 
+                  tuneGrid = tunegrid, ntree=200, trControl=control5, 
                   strata = ytrain_origin, sampsize = c(50,50), 
                   metric = "ROC")
-
-
+    
 pred = predict(rf_strata, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
-
-
-# with down sample + ROC
-
-control5$sampling = "down"
-down_fit = train(xtrain_origin, ytrain_origin, method = "parRF", 
-                 verbose = F, metric = "ROC", mtry = ncol(xtrain_origin), 
-                 trControl = control5)
-
-pred = predict(down_fit, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
-
+#       Prediction Less.50k More.50k
+#       Less.50k     4033      911
+#       More.50k      244     1324
+#       
+#       Accuracy : 0.8226          
+#       95% CI : (0.8131, 0.8318)
+#       No Information Rate : 0.6568          
+#       P-Value [Acc > NIR] : < 2.2e-16     
 
 ############################
-# up sample with roc
+# with down sample + ROC
+control5$sampling = "down"
+down_fit = train(xtrain_origin, ytrain_origin, method = "rf", 
+                 verbose = F, metric = "ROC", tuneGrid = tunegrid, ntree=200, 
+                 trControl = control5)
+pred = predict(down_fit, xtest_origin)
+confusionMatrix(ytest_origin, pred, positive = "More.50k")
+     
+############################
+# up sample with ROC
 control5$sampling = "up"
 up_fit = train(xtrain_origin, ytrain_origin, method = "parRF", 
                verbose = F, metric = "ROC",  mtry = ncol(xtrain_origin),
                trControl = control5)
-
 pred = predict(up_fit, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
-
-
 ############################
-# smote sample with roc
-
-ctrol8$sampling = "smote"
-smote_fit = train(xtrain_origin, ytrain_origin, method = "parRF", 
-                  verbose = F, metric = "ROC",  mtry = ncol(xtrain_origin),
-                  trControl = ctrol8)
-
-pred = predict(smote_fit, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
-
-
-
-model_list2 = list(original = rf_default,
-                   strata = rf_strata,
-                   down_roc = down_fit,
-                   up_weight = up_fit,
-                   SMOTE_weight = smote_fit)
 
 
 custom_col = c("#000000", "#009E73", "#0072B2", "#D55E00", "#CC79A7")
 model_roc_plot(model_list2, custom_col)
 
+
+
+##Looking at most important variables:
+varImp()
+varImpPlot()
+cartModel$variable.importance
+plot(cartModel)
+text(cartModel, cex = 0.5)
+plotcp(cartModel)
+
+
+######################ROC curve and AUC value
+library(ROCR)
+
+pred_ROC <-prediction(cart.pred_1, ytest_origin)
+perf <- performance(pred_ROC, measure = "tpr", x.measure = "fpr")
+plot(perf)
+abline(coef=c(0,1), col = "grey")
+AUC <- performance(pred_ROC,"auc")
+AUC@y.values

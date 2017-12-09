@@ -5,8 +5,19 @@ library(caret)
 library(doParallel)
 library(plotROC)
 
-
+seed =123
 set.seed(seed)
+df_impute = readRDS("data/df_impute_feat.rds")
+df_impute = data.table(df_impute)
+
+split1 = createDataPartition(df_impute$income, p  = 0.8)[[1]]
+
+train_origin = df_impute[split1,]
+test_origin = df_impute[-split1, ]
+xtrain_origin = train_origin[, -c("income")]
+ytrain_origin = train_origin$income
+xtest_origin = test_origin[,-c("income")]
+ytest_origin = test_origin$income
 
 train_origin <- data.frame(train_origin)
 test_origin <- data.frame(test_origin)
@@ -44,12 +55,7 @@ yhat.bag = predict(bag, newdata = test_origin)
 confusionMatrix(ytest_origin, yhat.bag, positive = "More.50k") 
 #Accuracy of 0.8537
 
-# The only parameters when bagging decision trees is the number of samples and
-# hence the number of trees to include. This can be chosen by increasing the 
-# number of trees on run after run until the accuracy begins to stop showing 
-# improvement (e.g. on a cross validation test harness). Very large numbers 
-# of models may take a long time to prepare, but will not overfit the 
-# training data.
+
 
 train_control <- trainControl(method="boot", number=100)
 # train the model
@@ -57,23 +63,6 @@ model <- train(income~., data=train_origin, trControl=train_control, method="nb"
 
 
 ####### Tuning ntrees: 
-seed = 1234
-set.seed(1234)
-
-ntree_test <- seq(50, 500, 50)
-
-accuracies <- vector()
-for(i in 1: length(ntree_test)){
-  bag <- randomForest(income~., data = train_origin, mtry = 16, importance = TRUE, ntree = ntree_test[i])
-  yhat.bag = predict(bag, newdata = test_origin)
-  test <- confusionMatrix(ytest_origin, yhat.bag, positive = "More.50k")
-  accuracies[i] <- (test$table[1] + test$table[4])/sum(test$table) #accuracy rate  
-}
-names(accuracies) <- ntree_test
-accuracies
-which.max(accuracies) #this is the 9th one, which gives us ntree = 450 and an accuracy of 0.8547297
-
-plot(accuracies)
 
 ##### Tuning maximum depth:
 
