@@ -459,3 +459,47 @@ saveRDS(df_remove_feat, "df_remove_feat.rds")
 
 ```
 
+
+
+####MAKING TEST IMPUTE
+```{r}
+df_test  = read.table("data/adult.test", sep = ",",colClasses=c("numeric", "character", "numeric", "factor","numeric", "factor", "character", "factor", "factor", "factor", rep("numeric", 3),"character","factor"))
+
+names(df_test) = c("age", "workclass", "fnlwgt", "education", "education-num", 
+              "marital-status", "occupation", "relationship", "race", "sex",
+              "capital-gain", "capital-loss", "hours-per-week",
+              "native_country","income")
+
+df_test <- as.data.frame(df_test)
+
+library(missForest)
+df_test <- NA_factor(df_test)
+df_test <- NA_imputes(df_test)
+
+df_impute_test =  combine_education(df_test)
+names(df_impute_test) <- c("age", "workclass", "fnlwgt", "education", "education-num", 
+              "marital_status", "occupation", "relationship", "race", "sex",
+              "capital-gain", "capital-loss", "hours-per-week",
+              "native_country","income")
+df_impute_test = education_median(df_impute_test)
+df_impute_test$`education-num` <- NULL
+df_impute_test <- age_combine(df_impute_test)
+df_impute_test <- age_median(df_impute_test)
+df_impute_test = race_combine(df_impute_test) 
+df_impute_test <- race_med(df_impute_test)
+
+df_impute_test <- marital_combine(df_impute_test)
+df_impute_test <- occup_sex_med(df_impute_test)
+df_impute_test <- occupation_combine(df_impute_test)
+df_impute_test <- mrg_combine(df_impute_test)
+df_impute_test <- gen_med(df_impute_test)
+df_impute_test <- country_combine(df_impute_test)
+df_impute_test <- workclass_combine(df_impute_test)
+df_impute_test <- relation_combine(df_impute_test)
+df_impute_test <- cap_gain_clean_outlier(df_impute_feat)
+df_impute_test$sex <- NULL
+
+saveRDS(df_impute_test, "df_impute_test.rds")
+
+```
+
