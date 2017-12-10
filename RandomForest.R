@@ -7,6 +7,7 @@ library(plotROC)
 library(dplyr)
 library(purrr)
 library(pROC)
+library(grid)
 
 
 #############################################################
@@ -25,18 +26,18 @@ df_impute = data.table(df_impute)
 
 #saveRDS(df_impute,"data/df_impute_feat.rds")
 
-n = ceiling(nrow(df_impute) * 0.8)
+
 #############################################################
 # Prepocessing data:
 #############################################################
+## stratified sampling data:
+split1 = createDataPartition(df_impute$income, p  = 0.8)[[1]]
 
-train_idx = sample(nrow(df_impute),n)
-train_origin = df_impute[train_idx,]
-test_origin = df_impute[-train_idx, ]
-xtrain_origin  = train_origin[,-c("income")]
+train_origin = df_impute[split1,]
+test_origin = df_impute[-split1, ]
+xtrain_origin = train_origin[, -c("income")]
 ytrain_origin = train_origin$income
-
-xtest_origin  = test_origin[,-c("income")]
+xtest_origin = test_origin[,-c("income")]
 ytest_origin = test_origin$income
 
 
@@ -47,11 +48,12 @@ ytest_origin = test_origin$income
 control = trainControl(method = "cv", number = 5)
 rf_default  = train(x = xtrain_origin, y = ytrain_origin,
                   method = "rf", trControl = control, 
-                    importance= T, ntree = 100, replace= F)
+                    importance= T, ntree = 100)
 rf_default
 pred = predict(rf_default, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
 varImp(rf_default)
+
 
 
 ########################################################
@@ -59,9 +61,10 @@ varImp(rf_default)
 ####impute with feature: 
 #### Accuracy: train: 86 %, test = 86%, t
 ### evaluation:
-# Prediction      Less.than.50k More.than.50k
-# Less.than.50k          6011           364
-# More.than.50k           792          1264
+
+# Prediction Less.50k More.50k
+# Less.50k     4634      310
+# More.50k      591      977
 
 
 #### impute without feature: 
@@ -112,9 +115,7 @@ varImp(rf_default)
 ##########################################################################################################################
 # Random Forest Parameter tuning: 
 
-###### parallel processing: 
-cluster = makeCluster(detectCores() -1)
-registerDoParallel(cluster)
+
 
 
 ####### Tuning mtries: 
@@ -123,7 +124,7 @@ registerDoParallel(cluster)
 
 control = trainControl(method = "cv", number = 5, search = "random",allowParallel = TRUE)
 mtry = sqrt(ncol(xtrain_origin))
-rf_random = train(xtrain_origin, ytrain_origin, method = "rf", 
+rf_random = train(xtrain_origin, ytrain_origin, method = "parRF", 
                   tuneLength = 15, trControl=control)
 
 ###rf_random results:
@@ -134,25 +135,6 @@ rf_random = train(xtrain_origin, ytrain_origin, method = "rf",
 pred = predict(rf_random, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
-###Confusion Matrix and Statistics
-      # Accuracy : 0.859           
-
-      # Sensitivity : 0.7424          
-      # Specificity : 0.8897          
-      # Pos Pred Value : 0.6387          
-      # Neg Pred Value : 0.9293          
-      # Prevalence : 0.2081          
-      # Detection Rate : 0.1545          
-
-################################### This is for the current data set?
-# Prediction Less.50k More.50k
-# Less.50k     4588      349
-# More.50k      569     1006
-
-################################### I think this was the the last dataset (before we input everything?)
-# Prediction Less.50k More.50k
-# Less.50k     4602      346
-# More.50k      560     1004
 
 
 ##### grid search: 
@@ -170,22 +152,6 @@ confusionMatrix(ytest_origin, pred_grid, positive = "More.50k")
 # Prediction Less.50k More.50k
 # Less.50k     4600      337
 # More.50k      568     1007 
-      # Confusion Matrix and Statistics
-      # Accuracy : 0.861           
-      # 95% CI : (0.8524, 0.8693)
-      # No Information Rate : 0.7936          
-      # P-Value [Acc > NIR] : < 2.2e-16       
-      # 
-      # Kappa : 0.6011          
-      # Mcnemar's Test P-Value : 2.082e-14       
-      # 
-      # Sensitivity : 0.7493          
-      # Specificity : 0.8901          
-      # Pos Pred Value : 0.6394          
-      # Neg Pred Value : 0.9317          
-      # Prevalence : 0.2064          
-      # Detection Rate : 0.1546          
-
 
 
 
@@ -198,7 +164,7 @@ confusionMatrix(ytest_origin, pred_grid, positive = "More.50k")
 ctrol = trainControl(method = "cv", number =5, 
                      verboseIter = F,
                      sampling = "down")
-set.seed(123)
+
 model_rf_under = train(xtrain_origin, ytrain_origin, method = "rf",
                        trControl = ctrol)
 
@@ -207,20 +173,15 @@ confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
 
 
-# Confusion Matrix and Statistics
-# 
-# Reference
 # Prediction Less.50k More.50k
-# Less.50k     3935      986
-# More.50k      257     1334
-
+# Less.50k     4077      867
+# More.50k      240     1328
 
 
 ##### Over sampling: 
 ctrol2 = trainControl(method = "cv", number =5, 
                      verboseIter = F,
                      sampling = "up")
-
 model_rf_over = train(xtrain_origin, ytrain_origin, method = "rf",
                       trControl = ctrol2)
 
@@ -229,10 +190,12 @@ pred = predict(model_rf_over, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
 
+
 # Reference
 # Prediction Less.50k More.50k
-# Less.50k     3928      993
-# More.50k      270     1321
+# Less.50k     4474      470
+# More.50k      477     1091
+
 
 
 #### Smote: 
@@ -247,13 +210,10 @@ pred = predict(model_rf_smote, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
 
-# Confusion Matrix and Statistics
-# 
-# Reference
-# Prediction Less.50k More.50k
-# Less.50k     4657      264
-# More.50k      674      917
 
+# Prediction Less.50k More.50k
+# Less.50k     4730      214
+# More.50k      684      884
 
 
 
@@ -289,8 +249,9 @@ confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
 # Reference
 # Prediction Less.50k More.50k
-# Less.50k     3865     1056
-# More.50k      252     1339
+# Less.50k     3994      950
+# More.50k      223     1345
+
 
 # with down sample + ROC
 
@@ -302,10 +263,9 @@ down_fit = train(xtrain_origin, ytrain_origin, method = "rf",
 pred = predict(down_fit, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
-# Reference
 # Prediction Less.50k More.50k
-# Less.50k     3809     1112
-# More.50k      196     1395
+# Less.50k     4059      885
+# More.50k      209     1359
 
 
 ############################
@@ -321,31 +281,46 @@ confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
 # 
 # Prediction Less.50k More.50k
-# Less.50k     3915     1006
-# More.50k      223     1368
+# Less.50k     4239      705
+# More.50k      272     1296
 
+# TPR = .647
+# FPR= 0.06
+# TNR = 0.93
+# FNR: 0.35
+
+# Less.50k     4203      741
+# More.50k      251     1317
+# 
+# TPR: .639
+# FPR: 0.05
+# TNR: 0.94
+# FNR: 0.36
 ############################
 # smote sample with roc
 
-ctrol8$sampling = "smote"
+control5$sampling = "smote"
 smote_fit = train(xtrain_origin, ytrain_origin, method = "rf", 
                            verbose = F, metric = "ROC", 
-                  trControl = ctrol8)
+                  trControl = control5)
 
 pred = predict(smote_fit, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
-##
+
+# 
+# Reference
 # Prediction Less.50k More.50k
-# Less.50k     4465      456
-# More.50k      552     1039
+# Less.50k     4672      272
+# More.50k      632      936
+
 
 
 model_list2 = list(original = rf_default,
                    strata = rf_strata,
                    down_roc = down_fit,
-                   up_weight = up_fit,
-                   SMOTE_weight = smote_fit)
+                   up_roc = up_fit,
+                   SMOTE_roc = smote_fit)
 
 
 custom_col = c("#000000", "#009E73", "#0072B2", "#D55E00", "#CC79A7")
@@ -377,9 +352,8 @@ confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
 # Reference
 # Prediction Less.50k More.50k
-# Less.50k     4539      382
-# More.50k      593      998
-
+# Less.50k     4628      316
+# More.50k      601      967
 
 
 
@@ -387,7 +361,7 @@ confusionMatrix(ytest_origin, pred, positive = "More.50k")
 # with weight  and strata: 
 
 weighted_strata = train(xtrain_origin, ytrain_origin, method = "rf", 
-      tuneLength = 15, trControl=ctrol8, 
+      tuneLength = 13, trControl=ctrol8, 
       strata = ytrain_origin, 
       sampsize = c(50,50), 
       metric = "ROC",
@@ -399,8 +373,8 @@ confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
 # Reference
 # Prediction Less.50k More.50k
-# Less.50k     3855     1066
-# More.50k      250     1341
+# Less.50k     3979      965
+# More.50k      212     1356
 
 nmin = min(table(ytrain_origin))
 weighted_down_fit = train(xtrain_origin, ytrain_origin, method = "rf", 
@@ -412,11 +386,10 @@ weighted_down_fit = train(xtrain_origin, ytrain_origin, method = "rf",
 pred = predict(weighted_down_fit, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
-
+# 
 # Prediction Less.50k More.50k
-# Less.50k     4031      890
-# More.50k      257     1334
-
+# Less.50k     4203      741
+# More.50k      251     1317
 
 
 
@@ -431,20 +404,13 @@ weighted_down_fit2 = train(xtrain_origin, ytrain_origin, method = "rf",
 pred = predict(weighted_down_fit2, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
+# Confusion Matrix and Statistics
+
+# Prediction Less.50k More.50k
+# Less.50k     4692      252
+# More.50k      602      966
 
 
-
-nmax  = max(table(ytrain_origin))
-
-weighted_up_fit = train(xtrain_origin, ytrain_origin, method = "rf", 
-                          tuneLength = 15, 
-                        trControl=ctrol8, 
-                        strata = ytrain_origin, 
-                        sampsize = c(8000,8000), metric = "ROC",
-                        weights = model_weights)
-
-pred = predict(weighted_up_fit, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
 
 
@@ -459,13 +425,16 @@ weighted_smote_fit = train(xtrain_origin, ytrain_origin, method = "rf",
 pred = predict(weighted_smote_fit, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
 
+# Prediction Less.50k More.50k
+# Less.50k     4607      337
+# More.50k      577      991
 
 
 
 model_list4 = list(weighted = weighted_fit,
                    weighted_strata = weighted_strata,
                    down_weight = weighted_down_fit,
-                   up_weight = weighted_up_fit,
+                   down_wight_wt_rp = weighted_down_fit2,
                    SMOTE_weight = weighted_smote_fit)
 
 
@@ -477,12 +446,94 @@ model_roc_plot(model_list4, custom_col)
 ##################################################################################
 #Tunning the parameter with best strategy: 
 ##################################################################################
-###### parallel processing: 
-cluster = makeCluster(detectCores() -1)
-registerDoParallel(cluster)
-
 
 ####### Tuning mtries and trees: 
 ##### random search: 
 
 
+########################################################################
+#compare accross decision tree, tree bags, and random forest 
+
+fiveStats = function(...) c(twoClassSummary(...), defaultSummary(...))
+fourStats = function(data, lev = levels(data$obs), model = NULL){
+  accKapp = postResample(data[, "pred"], data[, "obs"])
+  out = c(accKapp, sensitivity(data[,"pred"], data[, "obs"], lev[1]), specificity(data[, "pred"], data[, "obs"], lev[2]))
+  names(out)[3:4] = c('Sens', "Spec")
+  out
+}
+control = trainControl(method = "cv", number = 5, classProbs = T)
+ctrlNoProb = control
+ctrlNoProb$classProbs = F
+ctrlNoProb$summaryFunction  = fourStats
+
+
+
+rfFit = train(xtrain_origin, ytrain_origin, method = "rf", 
+              trControl = control, ntree = 100, 
+               metric = "ROC" )
+rfFit_treebag = train(xtrain_origin, ytrain_origin, method = "treebag", 
+              trControl = control, ntree = 100, 
+              metric = "ROC")
+rfFit_dt = train(xtrain_origin, ytrain_origin, method = "treebag", 
+                      trControl = control, 
+                      metric = "ROC")
+
+evalResults = data.frame( income = evaluation$income ) # put in the truth
+evalResults$RF = predict( rfFit, newdata=evaluation, type="prob" )[,1]
+evalResults$treebag= predict( rfFit_treebag, newdata=evaluation, type="prob" )[,1]
+evalResults$dt= predict(rfFit_dt, newdata=evaluation, type="prob" )[,1]
+
+rfROC = roc( evalResults$income, evalResults$RF, levels:rev( levels(evalResults$income) ) )
+treebagOC = roc( evalResults$income, evalResults$treebag, levels=rev( levels(evalResults$income) ) )
+dtROC = roc( evalResults$income, evalResults$dt, levels=rev( levels(evalResults$income) ) )
+
+
+
+
+##################################################################################
+# rerun the best model with best features: 
+##################################################################################
+up_fit_imp = data.frame(feature = rownames(varImp(up_fit)$importance), Score= varImp(up_fit)$importance)
+up_fit_imp = up_fit_imp[order(up_fit_imp[,2], decreasing = T),]$feature
+top_ten = c(as.character(up_fit_imp[1:10]), "income")
+
+
+df_final = df_impute[,..top_ten]
+train_final_idx = createDataPartition(df_final$income, p = 0.8)[[1]]
+train_final = df_final[train_final_idx,]
+test_final = df_final[-train_final_idx, ]
+up_fit_feat = train(train_final[,-c("income")], train_final$income, method = "rf", 
+               verbose = F, metric = "ROC", 
+               trControl = control5)
+
+# Prediction Less.50k More.50k
+# Less.50k     4758      186
+# More.50k      443     1125
+
+pred = predict(up_fit_feat, xtest_origin)
+confusionMatrix(ytest_origin, pred, positive = "More.50k")
+
+############################################
+# tuning parameter:
+control5$search = "random"
+
+rf_random = train(xtrain_origin, ytrain_origin, method = "parRF", 
+                  tuneLength = 15, trControl=control)
+
+###rf_random results:
+
+
+
+
+pred = predict(rf_random, xtest_origin)
+confusionMatrix(ytest_origin, pred, positive = "More.50k")
+
+
+
+##### grid search: 
+control2 = trainControl(method = "cv", number = 5, search = "grid", allowParallel = TRUE)
+tunegrid = expand.grid(.mtry = c(4:7))
+
+##################################################################################
+# try cost sensitive metrics:  
+##################################################################################
