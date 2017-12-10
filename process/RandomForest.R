@@ -379,10 +379,10 @@ model_roc_plot(model_list4, custom_col)
 
 ############################################
 # tuning parameter:
-control5$search = "random"
 
-rf_random = train(train_final[,-c("income")], train_final$income, method = "rf", 
-                  verbose = F, metric = "ROC", tuneLength = 2:9,
+
+rf_random = train(xtrain_origin, ytrain_origin, method = "rf", 
+                  verbose = F, metric = "ROC", tuneLength = 2:10,
                   trControl = control5)
 ###rf_random results:
 
@@ -411,10 +411,10 @@ customRF$prob <- function(modelFit, newdata, preProc = NULL, submodels = NULL)
 customRF$sort <- function(x) x[order(x[,1]),]
 customRF$levels <- function(x) x$classes
 
-
+control5$search = "grid"
 tunegrid = expand.grid(.mtry=c(2:9), .ntree=seq(50,300,50))
 
-rf_gridsearch = train(train_final[,-c("income")], train_final$income, method = customRF, 
+rf_gridsearch = train(xtrain_origin, ytrain_origin, method = customRF, 
                       verbose = F, metric = "ROC", tuneGrid = tunegrid,
                       trControl = control5)
 
@@ -469,3 +469,5 @@ dtROC = roc( evalResults$income, evalResults$dt, levels=rev( levels(evalResults$
 ##################################################################################
 # try cost sensitive metrics:  
 ##################################################################################
+
+

@@ -16,7 +16,7 @@ dir = "/Users/MyDinh/Downloads/Stat154/Stat154Project/"
 setwd(dir)
 set.seed(123)
 
-top_ten = readRDS("toptenfeat.rds")
+top_ten = readRDS("data/toptenfeat.rds")
 top_ten = top_ten[1:10]
 train_origin = readRDS("data/train.RDS")
 test_origin = readRDS("data/test.rds")
@@ -43,12 +43,15 @@ ctrol = trainControl(method = "cv", number =5,
 model_rf_under = train(xtrain_origin, ytrain_origin, method = "rf",
                        trControl = ctrol)
 
+
+
 ##### Over sampling: 
 ctrol2 = trainControl(method = "cv", number =5, 
                       verboseIter = F,
                       sampling = "up")
 model_rf_over = train(xtrain_origin, ytrain_origin, method = "rf",
                       trControl = ctrol2)
+
 
 
 #### Smote: 
@@ -58,6 +61,8 @@ ctrol4 = trainControl(method = "cv", number =5,
 
 model_rf_smote = train(xtrain_origin, ytrain_origin, method = "rf",
                        trControl = ctrol4)
+
+
 
 #############################################################
 # Use ROC metric
@@ -83,6 +88,8 @@ down_fit = train(xtrain_origin, ytrain_origin, method = "rf",
                  verbose = F, metric = "ROC", 
                  trControl = control5)
 
+
+
 # up sample with roc
 control5$sampling = "up"
 up_fit = train(xtrain_origin, ytrain_origin, method = "rf", 
@@ -95,6 +102,8 @@ control5$sampling = "smote"
 smote_fit = train(xtrain_origin, ytrain_origin, method = "rf", 
                   verbose = F, metric = "ROC", 
                   trControl = control5)
+
+
 
 
 ##################################################################################
@@ -115,6 +124,7 @@ weighted_fit = train(xtrain_origin, ytrain_origin, method = "rf",
                      metric = "ROC",
                      trControl = ctrol8)
 
+
 # with weight  and strata: 
 weighted_strata = train(xtrain_origin, ytrain_origin, method = "rf", 
                         tuneLength = 13, trControl=ctrol8, 
@@ -122,6 +132,7 @@ weighted_strata = train(xtrain_origin, ytrain_origin, method = "rf",
                         sampsize = c(50,50), 
                         metric = "ROC",
                         weights = model_weights)
+
 
 
 ctrol8 = trainControl(method = "cv", number =5, 
@@ -154,6 +165,7 @@ weighted_smote_fit = train(xtrain_origin, ytrain_origin, method = "rf",
 
 
 
+
 ##################################################################################
 #Tunning the parameter with best strategy: 
 ##################################################################################
@@ -162,7 +174,7 @@ weighted_smote_fit = train(xtrain_origin, ytrain_origin, method = "rf",
 ##### random search: 
 control5$search = "random"
 
-rf_random = train(train_final[,-c("income")], train_final$income, method = "rf", 
+rf_random = train(xtrain_origin, ytrain_origin, method = "rf", 
                   verbose = F, metric = "ROC", tuneLength = 2:9,
                   trControl = control5)
 
@@ -185,10 +197,16 @@ customRF$levels <- function(x) x$classes
 
 
 
-
+control5$search = "grid"
 tunegrid = expand.grid(.mtry=c(2:9), .ntree=seq(50,300,50))
 
-rf_gridsearch = train(train_final[,-c("income")], train_final$income, method = customRF, 
+rf_gridsearch = train(xtrain_origin, ytrain_origin, method = customRF, 
                       verbose = F, metric = "ROC", tuneGrid = tunegrid,
                       trControl = control5)
+
+#train
+
+#test
+
+
 

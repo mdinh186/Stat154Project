@@ -10,6 +10,10 @@ library(pROC)
 library(grid)
 
 
+df_test = readRDS("data/df_impute_test.rds")
+x_test = df_test[,-c("income")]
+y_test = df_test$income
+
 #############################################
 #Sampling technique for imbalanced class: 
 #############################################
@@ -17,12 +21,16 @@ library(grid)
 
 pred = predict(model_rf_under, xtest_origin)
 confusionMatrix(ytest_origin, pred, positive = "More.50k")
+#train
 
+#test
 
 ##### Over sampling: 
 pred2 = predict(model_rf_over, xtest_origin)
 confusionMatrix(ytest_origin, pred2, positive = "More.50k")
+#train
 
+#test
 
 
 
@@ -30,6 +38,9 @@ confusionMatrix(ytest_origin, pred2, positive = "More.50k")
 pred3 = predict(model_rf_smote, xtest_origin)
 confusionMatrix(ytest_origin, pred3, positive = "More.50k")
 
+#train
+
+#test
 
 #########################################
 # Use ROC metric
@@ -39,13 +50,18 @@ confusionMatrix(ytest_origin, pred3, positive = "More.50k")
 
 pred4 = predict(rf_strata, xtest_origin)
 confusionMatrix(ytest_origin, pred4, positive = "More.50k")
+#train
 
-
+#test
 # with down sample + ROC
 
 pred5 = predict(down_fit, xtest_origin)
 confusionMatrix(ytest_origin, pred5, positive = "More.50k")
 
+
+#train
+
+#test
 
 
 ############################
@@ -54,12 +70,19 @@ confusionMatrix(ytest_origin, pred5, positive = "More.50k")
 pred6 = predict(up_fit, xtest_origin)
 confusionMatrix(ytest_origin, pred6, positive = "More.50k")
 
+#train
+
+#test
+
 
 ############################
 # smote sample with roc
 
 pred7 = predict(smote_fit, xtest_origin)
 confusionMatrix(ytest_origin, pred7, positive = "More.50k")
+
+#train
+#test
 
 
 
@@ -71,14 +94,16 @@ confusionMatrix(ytest_origin, pred7, positive = "More.50k")
 pred8 = predict(weighted_fit, xtest_origin)
 confusionMatrix(ytest_origin, pred8, positive = "More.50k")
 
+#train
 
+#test
 
 
 ##############################
 # with weight  and strata: 
 pred9 = predict(weighted_strata, xtest_origin)
 confusionMatrix(ytest_origin, pred9, positive = "More.50k")
-
+#train
 
 #weight with down samp: 
 pred10 = predict(weighted_down_fit, xtest_origin)
@@ -105,13 +130,13 @@ confusionMatrix(ytest_origin, pred12, positive = "More.50k")
 ####### Tuning mtries and trees: 
 ##### random search: 
 
-pred13= predict(weighted_smote_fit, xtest_origin)
+pred13= predict(rf_random, xtest_origin)
 confusionMatrix(ytest_origin, pred13, positive = "More.50k")
 
 
 
 ##### grid search: 
-pred14= predict(weighted_smote_fit, xtest_origin)
+pred14= predict(rf_gridsearch, xtest_origin)
 confusionMatrix(ytest_origin, pred14, positive = "More.50k")
 
 
