@@ -28,13 +28,6 @@ xtest_origin = test_origin[,..top_ten]
 ytest_origin = test_origin$income
 
 
-df_origin  = readRDS("data/df_remove.rds")
-train_idx = createDataPartition(df_origin$income, p = 0.8)[[1]]
-xtrain_origin =df_origin[train_idx, -c("income")]
-ytrain_origin =df_origin[train_idx,]$income
-xtest_origin=df_origin[-train_idx, -c("income")]
-ytest_origin = df_origin[-train_idx,]$income
-
 
 
 
@@ -45,6 +38,26 @@ rf_default  = train(x = xtrain_origin, y = ytrain_origin,
 
 pred = predict(rf_default, xtest_origin)
 confusionMatrix(pred, ytest_origin,  positive = "More.50k")
+
+
+
+
+rf_default2  = train(x = xtrain_origin, y = ytrain_origin,
+                    method = "rf", trControl = control, 
+                    importance= T, ntree = 100)
+rf_default3  = train(x = xtrain_origin, y = ytrain_origin,
+                     method = "rf", trControl = control, 
+                     importance= T, ntree = 100)
+
+rf_default4  = train(x = xtrain_origin, y = ytrain_origin,
+                     method = "rf", trControl = control, 
+                     importance= T, ntree = 100)
+
+model_list = list(base_line1 = rf_default,
+                  base_line2 = rf_default2,
+                  base_line3 = rf_default3)
+custom_col = c("#000000", "#009E73", "#0072B2")
+model_roc_plot(model_list, custom_col, AUC = T)
 
 
 ##########################################################################################

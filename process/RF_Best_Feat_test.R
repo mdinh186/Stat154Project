@@ -192,7 +192,9 @@ confusionMatrix(pred9, y_test,   positive = "More.50k")
 pred10 = predict(weighted_down_fit, x_test)
 confusionMatrix(pred10, y_test, positive = "More.50k")
 
-
+test_origin = readRDS("data/test.rds")
+x_test = test_origin[,-c("income")]
+y_test = test_origin$income
 
 #test
 # Prediction Less.50k More.50k

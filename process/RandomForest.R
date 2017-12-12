@@ -222,7 +222,7 @@ confusionMatrix(pred, ytest_origin, positive = "More.50k")
 
 # Prediction Less.50k More.50k
 # Less.50k     4847      100
-# More.50k       97     1467
+# More.50k       97     1461
 # Accuracy : 0.8893  
 # Sensitivity : 0.9598          
 # Specificity : 0.8669 
@@ -279,7 +279,7 @@ confusionMatrix(pred, ytest_origin, positive = "More.50k")
 
 # Prediction Less.50k More.50k
 # Less.50k     4882      134
-# More.50k       62     1438
+# More.50k       62     1437
 # Sensitivity : 0.9145          
 # Specificity : 0.9875 
 

@@ -36,9 +36,14 @@ model_roc_plot = function(model_list, custom_col, AUC= FALSE){
   }
   results_df_roc =  bind_rows(results_list_roc)
   
+<<<<<<< HEAD
 
   g = ggplot(aes(x = fpr,  y = tpr, group = model), data = results_df_roc) +
 geom_line(aes(color = model), size = 1) +
+=======
+  g = ggplot(aes(x = fpr,  y = tpr, group = model), data = results_df_roc) +
+    geom_line(aes(color = model), size = 1) +
+>>>>>>> adc543f8dae679aa8c8760df4111f99c9f59f31d
     scale_color_manual(values = custom_col) +
     geom_abline(intercept = 0, slope = 1, color = "gray", size = 1) +
     theme_bw(base_size = 18)
