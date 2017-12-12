@@ -109,7 +109,8 @@ The workclass variable currently has 8 different levels - Federal-gov, Local-goc
 
 For relationships, this is the relationship of the surveyor to a central household figure. Unmarried referred to an unmarried partner; as such, we combined that we "Not-in-family" to make a grouping of Not-relative relationships. Husband and Wife were grouped together under "Spouse", while the last two remaining classes were combined as "Other-relative" relationships.
 
-8. Capital_gain
+8. Capital_gain:
+
 We noticed that there appear to be outliers for capital gain (there was a chunk of data that had values of over 99999). As such, we decided to change these outlier values to the mean value of the capital gains.
 
 
@@ -119,25 +120,38 @@ Because of imbalanced class situation, instead of randomly sample data to divide
 
 We original build a simple model on four datasets, the dataset with missing value removed with feature engineering and with original features, and the dataset with missing values imputed by `misForest` with feature engineering and with original features. This simple model includes a decision tree, bagges trees with 100 tress, and random forest with 100 trees without any hyperparameter tunning. The baseline models are defined as the models on the original dataset without any feature engineering and with missing values removed. The models' performance using random forest is reported below: 
 
-```{r, echo = F}
-models = c("Baseline", "Removed Missing Values with Feature Eng.", "Imputed Missing Values w/t Feature Eng.", "Imputed Missing Values w Feature Eng.")
-accuracy = c("81.7%", "82.8%", "82.7%", "86%")
-tpr = c("95.4%","93.5%","94.6%","75.9%")
-fpr = c("18.8%", "19.2%","18.3%","11.3%")
-spec = c("99.5%","99.2%", "99.4%","93.7")
-tab = data.frame(rbind(accuracy, tpr, fpr, spec))
-colnames(tab) = models
-tab
-```
+Since the imputed data set with feature engineering have significant higher positive rate and accuracy, we decide to choose the imputed missing values with feature engineering as our final dataset to build our models. 
+
+We noticed that even with our best model, it still does not do a good job with predicting people with income more than 50k, which is caused by the imbalance class problems. Thus we try different techniques for bagged trees and random forest models. We build three types of models: 
+
+##### 1. Sampling methods with accuracy metric: 
+
+The problem with imblanced class is that the event rate of minority class is significant less than the minority class. One natural way to fix this issue is sampling each class to balance the event rates. We employ four sampling methods: 
+
++ Up sampling: sample with replacement from the minority class until each class has the approximately the same number.
+
++ Down sampling:select data points from the majority class so that the majority class is roughly the same size as the minority class. 
+
++ Down sampling with bootstrap sampling: create a bootstrap sample roughly a same size from each class. The choice of sample here is 50.
+
++ SMOTE sampling: use both up-sampling and down sampling. While down-sampling in smote is the same as described aboe, to up-sampling the minority class, SMOTE synthesizes new cases by sampling from the minority class and its KNN. 
+
+The models are built using accuracy as the metric, in other word, the model fit the parameter to maximize accuracy. 
 
 
+##### 2. Sampling methods with AUC metric:
 
-The base
+We use the same sampling methods that were described in the previous sections but maximizing AUC to build our models. By using AUC metrics, we hope to improve the performance for minority class instead of only targetting majority class. 
+
+##### 3. Class weights and sampling methods with AUC metric:
+
+Beside from sampling methods and AUC metrics, we also use unequal case weights to penalize the majority class. The class weights we implements for class i is computed as: $\frac{1}{#classes * #observation for class i}$
 
 #### A. Decision Tree: 
 
 #### B. Bagged Trees: 
 
-#### c. Random Forest
+#### c. Random Forest: 
 
-#### 
+We fit a random forest with 10 from `caret` package using three techniques as described above. Random search to tune hyperparameter is implemented simultaneoulsy while training the model to find which models has the most accurarcy. 
+

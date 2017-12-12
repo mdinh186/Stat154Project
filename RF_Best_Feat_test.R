@@ -30,51 +30,52 @@ y_test = df_test$income
 ######Under sampling: 
 
 pred = predict(model_rf_under, x_test)
-confusionMatrix(y_test, pred, positive = "More.50k")
+confusionMatrix(pred, y_test,  positive = "More.50k")
 
-#train
-# Prediction Less.50k More.50k
-# Less.50k     4031      913
-# More.50k      282     1286
-    
+
   
 #test
 # Prediction Less.50k More.50k
-# Less.50k     9821     2614
-# More.50k      731     3115
-
+# Less.50k     9822      729
+# More.50k     2613     3117
+# Accuracy : 0.7945 
+# Sensitivity : 0.8105          
+# Specificity : 0.7899  
+# FPR : 0.21
+#Area under the curve: 0.9021
 
 ##### Over sampling: 
 pred2 = predict(model_rf_over, x_test)
-confusionMatrix(y_test, pred2, positive = "More.50k")
+confusionMatrix(pred2, y_test, positive = "More.50k")
 
-#train
-# Prediction Less.50k More.50k
-# Less.50k     4404      540
-# More.50k      473     1095
+
 
 #test
 
 # Prediction Less.50k More.50k
-# Less.50k    10977     1458
-# More.50k     1269     2577
-
-
+# Less.50k    10973     1270
+# More.50k     1462     2576
+#Accuracy : 0.8325 
+# Sensitivity : 0.6698          
+# Specificity : 0.8824 
+# FPR: 0.11
+# Area under the curve: 0.9019
 
 #### Smote: 
 pred3 = predict(model_rf_smote, x_test)
-confusionMatrix(y_test, pred3, positive = "More.50k")
+confusionMatrix(pred3, y_test,  positive = "More.50k")
 
-#train
-# Prediction Less.50k More.50k
-# Less.50k     4696      248
-# More.50k      685      883
+
 #test
 
 # Prediction Less.50k More.50k
-# Less.50k    11658      777
-# More.50k     1606     2240
-
+# Less.50k    11658     1605
+# More.50k      777     2241
+# Accuracy : 0.8537 
+# Sensitivity : 0.5827          
+# Specificity : 0.9375   
+# FPR : 0.06
+#Area under the curve: 0.8882
 
 #########################################
 # Use ROC metric
@@ -83,39 +84,41 @@ confusionMatrix(y_test, pred3, positive = "More.50k")
 # stratified sample with ROC 
 
 pred4 = predict(rf_strata, x_test)
-confusionMatrix(y_test, pred4, positive = "More.50k")
-#train
-# Prediction Less.50k More.50k
-# Less.50k     3978      966
-# More.50k      221     1347
+confusionMatrix(pred4, y_test, positive = "More.50k")
+
 
 #test
 # Prediction Less.50k More.50k
-# Less.50k     9782     2653
-# More.50k      577     3269
-
+# Less.50k     9784      575
+# More.50k     2651     3271
+# Accuracy : 0.8019 
+# Sensitivity : 0.8505         
+# Specificity : 0.7868 
+# FPR : 0.21
+#Area under the curve: 0.9076
 
 # with down sample + ROC
 
 pred5 = predict(down_fit, x_test)
-confusionMatrix(y_test, pred5, positive = "More.50k")
+confusionMatrix(pred5, y_test,  positive = "More.50k")
 
 
-#train
-# Prediction Less.50k More.50k
-# Less.50k     4016      928
-# More.50k      307     1261
 #test
 
 # Prediction Less.50k More.50k
-# Less.50k     9895     2540
-# More.50k      712     3134
+# Less.50k     9896      712
+# More.50k     2539     3134
 
+# Accuracy : 0.8001  
+# Sensitivity : 0.8149          
+# Specificity : 0.7958
+# FPR: 0.20 
+# Area under the curve: 0.8989
 ############################
 # up sample with roc
 
 pred6 = predict(up_fit, x_test)
-confusionMatrix(y_test, pred6, positive = "More.50k")
+confusionMatrix(pred6,y_test, positive = "More.50k")
 
 #train
 # Prediction Less.50k More.50k
@@ -124,15 +127,18 @@ confusionMatrix(y_test, pred6, positive = "More.50k")
 
 #test
 # Prediction Less.50k More.50k
-# Less.50k    10667     1768
-# More.50k      976     2870
-
-
+# Less.50k    10667      975
+# More.50k     1768     2871
+# Accuracy : 0.8315
+# Sensitivity : 0.7465          
+# Specificity : 0.8578 
+# FPR: 0.14
+#Area under the curve: 0.9073
 ############################
 # smote sample with roc
 
 pred7 = predict(smote_fit, x_test)
-confusionMatrix(y_test, pred7, positive = "More.50k")
+confusionMatrix(pred7, y_test, positive = "More.50k")
 
 #train
 # Prediction Less.50k More.50k
@@ -140,83 +146,91 @@ confusionMatrix(y_test, pred7, positive = "More.50k")
 # More.50k      619      949
 #test
 # Prediction Less.50k More.50k
-# Less.50k    11393     1042
-# More.50k     1536     2310
-
-
+# Less.50k    11395     1535
+# More.50k     1040     2311
+# Accuracy : 0.8417  
+# Sensitivity : 0.6009          
+# Specificity : 0.9164 
+# FPR: 0.08
+#Area under the curve: 0.8947
+#
 ##################################################################################
 #Model with weights: 
 ##################################################################################
 # with weights
-
 pred8 = predict(weighted_fit, x_test)
-confusionMatrix(y_test, pred8, positive = "More.50k")
+confusionMatrix(pred8, y_test, positive = "More.50k")
 
-#train
-# Prediction Less.50k More.50k
-# Less.50k     4702      242
-# More.50k      652      916
-#test
-# Prediction Less.50k More.50k
-# Less.50k    11718      717
-# More.50k     1616     2230
 
+# Prediction Less.50k More.50k
+# Less.50k    11718     1616
+# More.50k      717     2230
+# Accuracy : 0.8567 
+# Sensitivity : 0.5798          
+# Specificity : 0.9423
+# FPR: 0.05
+#Area under the curve: 0.877
 ##############################
 # with weight  and strata: 
 pred9 = predict(weighted_strata, x_test)
-confusionMatrix(y_test, pred9, positive = "More.50k")
+confusionMatrix(pred9, y_test,   positive = "More.50k")
 
-#train
 
-# Prediction Less.50k More.50k
-# Less.50k     3950      994
-# More.50k      226     1342
 #test
 # Prediction Less.50k More.50k
-# Less.50k     9699     2736
-# More.50k      573     3273
+# Less.50k     9699      574
+# More.50k     2736     3272
+
+# Accuracy : 0.7968
+# Sensitivity : 0.8508          
+# Specificity : 0.7800 
+# FPR: 0.22
+#Area under the curve: 0.9056
+
 
 #weight with down samp: 
 pred10 = predict(weighted_down_fit, x_test)
-confusionMatrix(y_test, pred10, positive = "More.50k")
+confusionMatrix(pred10, y_test, positive = "More.50k")
 
-#train
-# Prediction Less.50k More.50k
-# Less.50k     4093      851
-# More.50k      239     1329
+
 
 #test
 # Prediction Less.50k More.50k
-# Less.50k    10033     2402
-# More.50k      634     3212
+# Less.50k    10032      636
+# More.50k     2403     3210
+# Accuracy : 0.8135  
+# Sensitivity : 0.8346          
+# Specificity : 0.8068 
+# FPR: 0.19
+# Area under the curve: 0.9137
 
 pred11 = predict(weighted_down_fit2, x_test)
-confusionMatrix(y_test, pred11, positive = "More.50k")
+confusionMatrix(pred11, y_test,  positive = "More.50k")
 
-#train
-# Prediction Less.50k More.50k
-# Less.50k     4696      248
-# More.50k      625      943
+
 
 #test
 # Prediction Less.50k More.50k
-# Less.50k    11616      819
-# More.50k     1572     2274
-
+# Less.50k    11617     1574
+# More.50k      818     2272
+# Accuracy : 0.8531  
+# Sensitivity : 0.5907          
+# Specificity : 0.9342
+# FPR : 0.06
 
 pred12= predict(weighted_smote_fit, x_test)
-confusionMatrix(y_test, pred12, positive = "More.50k")
+confusionMatrix(pred12, y_test,   positive = "More.50k")
 
 
-#train
+#test 
 # Prediction Less.50k More.50k
-# Less.50k     4605      339
-# More.50k      624      944
-#test
-# Prediction Less.50k More.50k
-# Less.50k    11427     1008
-# More.50k     1552     2294
-
+# Less.50k    11427     1551
+# More.50k     1008     2295
+# Accuracy : 0.8428
+# Sensitivity : 0.5967          
+# Specificity : 0.9189     
+# FPR : 0.08
+#Area under the curve: 0.896
 ##################################################################################
 #Tunning the parameter with best strategy: 
 ##################################################################################
@@ -225,22 +239,29 @@ confusionMatrix(y_test, pred12, positive = "More.50k")
 ##### random search: 
 
 pred13= predict(rf_random, x_test)
-confusionMatrix(y_test, pred13, positive = "More.50k")
+confusionMatrix(pred13, y_test, positive = "More.50k")
 
-#train:
-# Prediction Less.50k More.50k
-# Less.50k     4567      377
-# More.50k      604      964
 
 #test
 # Prediction Less.50k More.50k
-# Less.50k    11283     1152
-# More.50k     1515     2331
-
+# Less.50k    11279     1514
+# More.50k     1156     2332
+# Accuracy : 0.8362
+# Sensitivity : 0.6063          
+# Specificity : 0.9070 
+# FPR : 0.09
+#Area under the curve: 0.895
 
 ##### grid search: 
 pred14= predict(rf_gridsearch, x_test)
-confusionMatrix(y_test, pred14, positive = "More.50k")
+confusionMatrix(pred14, y_test,   positive = "More.50k")
 
 
-
+# Prediction Less.50k More.50k
+# Less.50k    11375     1484
+# More.50k     1060     2362
+# Accuracy : 0.8439
+# Sensitivity : 0.6141          
+# Specificity : 0.9148
+# FPR : 0.08
+#Area under the curve: 0.8927

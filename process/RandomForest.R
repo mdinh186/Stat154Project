@@ -25,17 +25,19 @@ df_impute = data.table(df_impute)
 # Prepocessing data:
 #############################################################
 ## stratified sampling data:
-split1 = createDataPartition(df_impute$income, p  = 0.8)[[1]]
+# split1 = createDataPartition(df_impute$income, p  = 0.8)[[1]]
+# 
+# train_origin = df_impute[split1,]
+# test_origin = df_impute[-split1, ]
+# xtrain_origin = train_origin[, -c("income")]
+# ytrain_origin = train_origin$income
+# xtest_origin = test_origin[,-c("income")]
+# ytest_origin = test_origin$income
 
-train_origin = df_impute[split1,]
-test_origin = df_impute[-split1, ]
-xtrain_origin = train_origin[, -c("income")]
+
+train_origin = readRDS("data/train.rds")
+xtrain_origin = train_origin[,-c("income")]
 ytrain_origin = train_origin$income
-xtest_origin = test_origin[,-c("income")]
-ytest_origin = test_origin$income
-
-
-
 #######################################
 #make baseline models and feature sections
 
@@ -46,7 +48,7 @@ rf_default  = train(x = xtrain_origin, y = ytrain_origin,
                     importance= T, ntree = 100)
 rf_default
 pred = predict(rf_default, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
 varImp(rf_default)
 
 
@@ -89,23 +91,6 @@ varImp(rf_default)
 
 ########################################################
 ### result for version 2:  12/5 
-# (use AUC as metrics)
-# Confusion Matrix and Statistics
-# 
-# Reference
-# Prediction  <=50K  >50K
-# <=50K   4602   322
-# >50K     589   999
-
-# Reference
-# Prediction Less.50k More.50k
-# Less.50k     4571      377
-# More.50k      567      997
-
-# Reference
-# Prediction Less.50k More.50k
-# Less.50k     4571      377
-# More.50k      572      992
 
 
 
@@ -123,13 +108,15 @@ model_rf_under = train(xtrain_origin, ytrain_origin, method = "rf",
                        trControl = ctrol)
 
 pred = predict(model_rf_under, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
 
 # Prediction Less.50k More.50k
-# Less.50k     4290      654
-# More.50k       59     1509
-
-
+# Less.50k     4290       58
+# More.50k      654     1510
+# Sensitivity : 0.9630          
+# Specificity : 0.8677
+# FPR : 0.13
+# Area under the curve: 0.9699
 ##### Over sampling: 
 ctrol2 = trainControl(method = "cv", number =5, 
                      verboseIter = F,
@@ -139,12 +126,17 @@ model_rf_over = train(xtrain_origin, ytrain_origin, method = "rf",
 
 
 pred = predict(model_rf_over, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
+
+#
 # Prediction Less.50k More.50k
-# Less.50k     4824      120
-# More.50k       97     1471
-
-
+# Less.50k     4824       98
+# More.50k      120     1470
+# Accuracy : 0.9665
+# Sensitivity : 0.9375          
+# Specificity : 0.9757
+# FPR : 0.024
+# Area under the curve: 0.9881
 
 
 
@@ -157,23 +149,22 @@ model_rf_smote = train(xtrain_origin, ytrain_origin, method = "rf",
                       trControl = ctrol4)
 
 pred = predict(model_rf_smote, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
+
 # Prediction Less.50k More.50k
-# Less.50k     4761      183
-# More.50k      568     1000
+# Less.50k     4761      568
+# More.50k      183     1000
+# Sensitivity : 0.6378          
+# Specificity : 0.9630 
+# Area under the curve: 0.9404
 
+colnames(test_origin)[17] = "income"
 
-
-
-
-model_list1 = list(original = rf_default, 
-                   down =  model_rf_under, 
-                   up = model_rf_over, 
-                   smote = model_rf_smote)
-
-custom_col = c("#000000", "#009E73", "#0072B2", "#D55E00")
-
-model_roc_plot(model_list1, custom_col)
+model_list_samp = list(under_sampling = model_rf_under,
+                       over_sampling = model_rf_over,
+                       smote_sampling = model_rf_smote)
+custom_col = c("#000000", "#009E73", "#0072B2")
+model_roc_plot(model_list_samp, custom_col, AUC = T)
 
 
 
@@ -194,13 +185,13 @@ rf_strata = train(xtrain_origin, ytrain_origin, method = "rf",
 
 
 pred = predict(rf_strata, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
 
 # Prediction Less.50k More.50k
-# Less.50k     4013      931
-# More.50k      238     1330
-
-
+# Less.50k     4013      238
+# More.50k      931     1330
+# Accuracy : 0.8205 
+#Area under the curve: 0.9079
 # with down sample + ROC
 
 control5$sampling = "down"
@@ -209,14 +200,15 @@ down_fit = train(xtrain_origin, ytrain_origin, method = "rf",
                  trControl = control5)
 
 pred = predict(down_fit, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
 
 # Prediction Less.50k More.50k
-# Less.50k     4288      656
-# More.50k       64     1504
-
-
-
+# Less.50k     4286       63
+# More.50k      658     1505
+# Accuracy : 0.8893  
+# Sensitivity : 0.9598          
+# Specificity : 0.8669          
+# Area under the curve: 0.9679
 ############################
 # up sample with roc
 control5$sampling = "up"
@@ -225,13 +217,16 @@ up_fit = train(xtrain_origin, ytrain_origin, method = "rf",
                trControl = control5)
 
 pred = predict(up_fit, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
 
 
 # Prediction Less.50k More.50k
-# Less.50k     4847       97
-# More.50k      100     1468
-
+# Less.50k     4847      100
+# More.50k       97     1467
+# Accuracy : 0.8893  
+# Sensitivity : 0.9598          
+# Specificity : 0.8669 
+#Area under the curve: 0.9882
 
 ############################
 # smote sample with roc
@@ -242,25 +237,23 @@ smote_fit = train(xtrain_origin, ytrain_origin, method = "rf",
                   trControl = control5)
 
 pred = predict(smote_fit, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
 
 
 # Prediction Less.50k More.50k
-# Less.50k     4770      174
-# More.50k      163     1405
+# Less.50k     4770      163
+# More.50k      174     1405
+#Accuracy : 0.9482
+# Sensitivity : 0.8960          
+# Specificity : 0.9648
+#Area under the curve: 0.9806
 
-
-model_list2 = list(original = rf_default,
-                   strata = rf_strata,
-                   down_roc = down_fit,
-                   up_roc = up_fit,
-                   SMOTE_roc = smote_fit)
-
-
-custom_col = c("#000000", "#009E73", "#0072B2", "#D55E00", "#CC79A7")
-model_roc_plot(model_list2, custom_col)
-
-
+model_list_roc_samp = list(under_sampling_w_roc = down_fit, 
+                           over_sampling_w_roc= up_fit, 
+                           smote_sampling_w_roc = smote_fit, 
+                           stratified_50_sampling_w_roc = rf_strata)
+custom_col = c("#000000", "#009E73", "#0072B2", "#D55E00")
+model_roc_plot(model_list_roc_samp, custom_col, AUC = T)
 
 
 
@@ -282,12 +275,13 @@ weighted_fit = train(xtrain_origin, ytrain_origin, method = "rf",
                      metric = "ROC",
                      trControl = ctrol8)
 pred = predict(weighted_fit, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
 
 # Prediction Less.50k More.50k
-# Less.50k     4882       62
-# More.50k      133     1435
-
+# Less.50k     4882      134
+# More.50k       62     1438
+# Sensitivity : 0.9145          
+# Specificity : 0.9875 
 
 ##############################
 # with weight  and strata: 
@@ -300,12 +294,16 @@ weighted_strata = train(xtrain_origin, ytrain_origin, method = "rf",
       weights = model_weights)
 
 pred = predict(weighted_strata, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
 
 
 # Prediction Less.50k More.50k
-# Less.50k     3993      951
-# More.50k      230     1338
+# Less.50k     3991      230
+# More.50k      953     1338
+# Accuracy : 0.8183 
+# Sensitivity : 0.8533          
+# Specificity : 0.8072 
+#Area under the curve: 0.9154
 
 ctrol8 = trainControl(method = "cv", number =5, 
                       summaryFunction = twoClassSummary, 
@@ -318,14 +316,15 @@ weighted_down_fit = train(xtrain_origin, ytrain_origin, method = "rf",
                         weights = model_weights)
 
 pred = predict(weighted_down_fit, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
 
 # Prediction Less.50k More.50k
-# Less.50k     4355      589
-# More.50k       87     1481
-
-
-
+# Less.50k     4355       86
+# More.50k      589     1482
+# Accuracy : 0.8963 
+# Sensitivity : 0.9452          
+# Specificity : 0.8809
+# Area under the curve: 0.9771
 nmin = min(table(ytrain_origin))
 weighted_down_fit2 = train(xtrain_origin, ytrain_origin, method = "rf", 
                           tuneLength = 15, trControl=ctrol8, 
@@ -334,17 +333,21 @@ weighted_down_fit2 = train(xtrain_origin, ytrain_origin, method = "rf",
                           replace = F,
                           weights = model_weights)
 
+
+
+
 pred = predict(weighted_down_fit2, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
 
 # Confusion Matrix and Statistics
 
 # Prediction Less.50k More.50k
-# Less.50k     4810      134
-# More.50k      278     1290
-
-
-
+# Less.50k     4811      277
+# More.50k      133     1291
+# Accuracy : 0.937
+# Sensitivity : 0.8233          
+# Specificity : 0.9731
+#Area under the curve: 0.9174
 
 ctrol8$sampling = "smote"
 weighted_smote_fit = train(xtrain_origin, ytrain_origin, method = "rf", 
@@ -355,25 +358,21 @@ weighted_smote_fit = train(xtrain_origin, ytrain_origin, method = "rf",
                         weights = model_weights)
 
 pred = predict(weighted_smote_fit, xtest_origin)
-confusionMatrix(ytest_origin, pred, positive = "More.50k")
-
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
 # Prediction Less.50k More.50k
-# Less.50k     4792      152
-# More.50k      249     1319
-
-
-
-model_list4 = list(weighted = weighted_fit,
-                   weighted_strata = weighted_strata,
-                   down_weight = weighted_down_fit,
-                   down_wight_wt_rp = weighted_down_fit2,
-                   SMOTE_weight = weighted_smote_fit)
-
-
-custom_col = c("#000000", "#009E73", "#0072B2", "#D55E00", "#CC79A7")
-model_roc_plot(model_list4, custom_col)
-
-
+# Less.50k     4792      250
+# More.50k      152     1318
+# Accuracy : 0.9383
+# Sensitivity : 0.8406         
+# Specificity : 0.9693
+# Area under the curve: 0.9114
+model_list_weight_samp = list(
+                              weighted = weighted_fit2, 
+                              weighted_down_samp_w_roc= weighted_down_fit2, 
+                              weighted_smote_sampling_w_roc = weighted_smote_fit2, 
+                              weighted_stratified_sampling_w_roc = weighted_down_fit22)
+custom_col = c("#000000", "#009E73", "#0072B2", "#D55E00")
+model_roc_plot(model_list_weight_samp, custom_col, AUC = T)
 
 
 
@@ -386,13 +385,8 @@ rf_random = train(xtrain_origin, ytrain_origin, method = "rf",
                   trControl = control5)
 ###rf_random results:
 
-# Prediction Less.50k More.50k
-# Less.50k     3895     1049
-# More.50k      230     1338
-
-
-pred = predict(rf_random, test_final[,-c("income")])
-confusionMatrix(test_final$income, pred, positive = "More.50k")
+pred = predict(rf_random, xtest_origin)
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
 
 
 
@@ -418,13 +412,20 @@ rf_gridsearch = train(xtrain_origin, ytrain_origin, method = customRF,
                       verbose = F, metric = "ROC", tuneGrid = tunegrid,
                       trControl = control5)
 
-pred = predict(rf_gridsearch, test_final[,-c("income")])
-confusionMatrix(test_final$income, pred, positive = "More.50k")
+pred = predict(rf_gridsearch, xtest_origin)
+confusionMatrix(pred, ytest_origin, positive = "More.50k")
 
 
+# Prediction Less.50k More.50k
+# Less.50k     4602      342
+# More.50k      578      990
 
 
-
+model_list_tuning = list(baseline = rf_default,
+                         random_search_smote= rf_random, 
+                         grid_search_smote = rf_gridsearch)
+custom_col = c("#000000", "#009E73", "#0072B2")
+model_roc_plot(model_list_tuning, custom_col, AUC = T)
 
 
 ########################################################################
