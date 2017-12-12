@@ -1,8 +1,9 @@
 # Stat154Project
 
 team_doglovers/
-     * README.md
-     * data/ (all of our data files)
+     
+     * README.md (directory of all files)
+     * data/ 
         + adult.data (original dataset file)
         + adult.test (original dataset file)
         + data-dictionary.txt (original dataset description)
@@ -27,8 +28,15 @@ team_doglovers/
             - varim_majority.png
             - varim_minority.png
         + Performance/
+            - Baseline (baseline performance statistics for NA datasets)
+            - rf_final_ROC.png (ROC curve for final randomforest)
+            - roc_curve_test_top_ten_hyperparam_tuning_smote_samp.png (ROC curve on top ten for smote sample)
+            - roc_curve_test_top_ten_sampling_w_roc_.png (ROC curve on top ten, roc metric)
+            - roc_curve_test_weighted_sampling_wroc.png (ROC curve on test data, roc metric, weighted)
+            - roc_curve_training_weighted_sampling_roc.png (ROC curve on training data, weighted with roc metric)
             - TEST_Bagged_ROC.png (ROC curve for final bagged tree, on test set)
             - TEST_Decision_ROC.png (ROC curve for final decision tree, on test set)
+            - test_top_ten_sampling_roc_curve.png (top ten final randomforest model, ROC curve against test data)
         + PreProcessing/
             - agevsinc.png (training set age by income class)
             - capital-gainvsinc.png (training set capital gains by income class)
@@ -58,8 +66,9 @@ team_doglovers/
         + RF_Best_Feat.R (Randomforest model selection)
         + RF_test.R (prelim exploring randomforest trees)
      * report/
-        + Final_Report.docx
-        + Final_Report.pdf
+        + Final_Report_12.11.17.docx (word format of final report)
+        + Final_Report_12.11.17.pdf (PDF format of final report)
+        + Final_Report.Rmd (Rmd file for report)
         
         
       
