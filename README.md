@@ -1,7 +1,9 @@
 # Stat154Project
 
 team_doglovers/
+
      * README.md
+     
      * data/ (all of our data files)
         + adult.data (original dataset file)
         + adult.test (original dataset file)
@@ -14,6 +16,7 @@ team_doglovers/
         + test.rds (validation test set)
         + toptenfeat.rds (randomforest top ten variables set)
         + train.rds (validation training set)
+        
     * Image/
         + Model_Building/
             - Bagged_final_ROC.png (ROC curve for final bagged model, validation set)
@@ -26,9 +29,11 @@ team_doglovers/
             - decision_varimp.png (variable importance for final decision tree)
             - varim_majority.png
             - varim_minority.png
+            
         + Performance/
             - TEST_Bagged_ROC.png (ROC curve for final bagged tree, on test set)
             - TEST_Decision_ROC.png (ROC curve for final decision tree, on test set)
+            
         + PreProcessing/
             - agevsinc.png (training set age by income class)
             - capital-gainvsinc.png (training set capital gains by income class)
@@ -39,6 +44,7 @@ team_doglovers/
             - fnlwgtvsinc.png (training set finalweight by income class)
             - hours-per-weekvsinc.png (training set hours worked by income class)
             - missing_value.png (examining missing values, EDA)
+            
     * process/ 
         + Bagged_tree.R (prelim exploring bagged model)
         + Bagged_Best.R (Bagged model selection)
@@ -57,6 +63,7 @@ team_doglovers/
         + RF_Best_Feat_test.R (Final randomforest model against test data) 
         + RF_Best_Feat.R (Randomforest model selection)
         + RF_test.R (prelim exploring randomforest trees)
+        
      * report/
         + Final_Report.docx
         + Final_Report.pdf
